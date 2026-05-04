@@ -69,10 +69,18 @@ def load_news() -> list[dict]:
     return json.loads(p.read_text(encoding="utf-8")).get("items", [])
 
 
+def load_tm_values() -> dict[str, dict]:
+    p = CACHE / "tm_values.json"
+    if not p.exists():
+        return {}
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
 def merge_data() -> list[dict]:
     squad = json.loads((CACHE / "squad.json").read_text(encoding="utf-8"))["players"]
     rumors = json.loads((CACHE / "rumors.json").read_text(encoding="utf-8"))["players"]
     stats = json.loads((CACHE / "stats.json").read_text(encoding="utf-8"))
+    tm_values = load_tm_values()
 
     by_id: dict[int, dict] = {}
     for p in squad:
@@ -95,6 +103,7 @@ def merge_data() -> list[dict]:
         refined = refine_position(p)
         ui_group = REFINED_TO_UI_GROUP.get(refined, "")
         team = p.get("current_team") or "Time não informado"
+        value = tm_values.get(str(pid), {})
 
         merged.append({
             "id": pid,
@@ -118,6 +127,8 @@ def merge_data() -> list[dict]:
             "latest_news_url": p.get("latest_news_url"),
             "latest_news_title": p.get("latest_news_title"),
             "latest_news_journalist": p.get("latest_news_journalist"),
+            "market_value_eur": value.get("value_eur"),
+            "market_value_label": value.get("value_label"),
         })
 
     return merged
@@ -602,6 +613,26 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     line-height: 1.5;
   }
   .rumor-card .rumor-meta .pos { color: var(--gold); }
+  .rumor-card .market-value {
+    display: inline-block;
+    font-family: var(--font-numeric);
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--paper);
+    letter-spacing: -0.01em;
+    line-height: 1;
+    margin: 4px 0 12px;
+  }
+  .rumor-card .market-value::before {
+    content: "VALOR";
+    display: block;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: var(--mist);
+    margin-bottom: 4px;
+  }
   .rumor-card .conf {
     margin: auto 0 12px;
   }
@@ -954,6 +985,26 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     color: var(--mist);
     text-transform: uppercase;
   }
+  .pcard .pcard-value {
+    display: block;
+    margin-top: 14px;
+    font-family: var(--font-numeric);
+    font-weight: 800;
+    font-size: 28px;
+    color: var(--gold);
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .pcard .pcard-value::before {
+    content: "VALOR DE MERCADO";
+    display: block;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: var(--mist);
+    margin-bottom: 4px;
+  }
   .pcard .note {
     display: block;
     margin-top: 12px;
@@ -1045,21 +1096,21 @@ HEAD_OPEN = r"""<!DOCTYPE html>
   /* ─── watermark (assinatura do dono) ─── */
   .watermark {
     position: fixed;
-    bottom: 14px;
-    right: 22px;
+    bottom: 10px;
+    right: 16px;
     font-family: "Allura", cursive;
-    font-size: 38px;
+    font-size: 22px;
     color: var(--paper);
-    opacity: 0.28;
+    opacity: 0.32;
     z-index: 100;
     pointer-events: none;
     user-select: none;
     letter-spacing: 0.01em;
     line-height: 1;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   }
   @media (max-width: 560px) {
-    .watermark { font-size: 28px; bottom: 10px; right: 14px; }
+    .watermark { font-size: 18px; bottom: 8px; right: 10px; }
   }
 
   /* ─── reveal ─── */
@@ -1376,6 +1427,7 @@ function renderRumors() {
           ${esc(r.team || "?")} · <span class="pos">${esc(r.position_refined || "?")}</span>
           ${r.note ? `<br><span style="opacity:0.85">${esc(r.note)}</span>` : ""}
         </p>
+        ${r.market_value_label ? `<div class="market-value">${esc(r.market_value_label)}</div>` : ""}
         <div class="conf">
           <div class="conf-row">
             <span>Confiança</span>
@@ -1561,6 +1613,7 @@ function renderComparison() {
           ${esc(p.team)}${p.country ? ` · ${esc(p.country)}` : ""}<br>
           ${esc(bio)}
           <span class="league-line">${esc(p.league || "—")}</span>
+          ${p.market_value_label ? `<span class="pcard-value">${esc(p.market_value_label)}</span>` : ""}
           ${p.note ? `<span class="note">${esc(p.note)}</span>` : ""}
         </div>
       </article>`;
