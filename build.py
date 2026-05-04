@@ -167,301 +167,630 @@ TEMPLATE = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Centro de Transferências FC Barcelona — 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Big+Shoulders+Display:wght@600;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f1419;
-    --panel: #1a1f2e;
-    --panel-2: #232938;
-    --text: #e6e8eb;
-    --muted: #8a93a3;
-    --border: #2a3142;
-    --barca-blue: #004D98;
-    --barca-grenat: #A50044;
-    --barca-gold: #FFED02;
-    --win: #5cd673;
-    --loss: #e57373;
+    --ink: #0c0e1c;
+    --ink-rise: #141729;
+    --ink-deep: #06080f;
+    --paper: #f0e8d6;
+    --paper-dim: rgba(240, 232, 214, 0.08);
+    --blue: #1a4faf;
+    --blue-deep: #002f6c;
+    --grenat: #b3163a;
+    --grenat-deep: #82001f;
+    --gold: #f5c518;
+    --silver: #d4d8e0;
+    --mist: #6b7388;
+    --rule: #1f2236;
+    --rule-bright: #2a2e48;
+    --win: #6dd47a;
+
+    --font-display: "Fraunces", "Times New Roman", serif;
+    --font-body: "Manrope", -apple-system, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
+    --font-numeric: "Big Shoulders Display", "Manrope", sans-serif;
   }
   * { box-sizing: border-box; }
+  html { background: var(--ink-deep); }
   body {
     margin: 0;
-    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
+    font-family: var(--font-body);
+    background: var(--ink);
+    color: var(--silver);
+    line-height: 1.55;
+    font-feature-settings: "tnum", "ss01";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* paper grain via SVG noise */
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(26, 79, 175, 0.08), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(179, 22, 58, 0.06), transparent 45%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.95 0 0 0 0 0.95 0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-attachment: fixed;
   }
-  .stripe {
-    height: 6px;
-    background: linear-gradient(to right,
-      var(--barca-blue) 0%, var(--barca-blue) 50%,
-      var(--barca-grenat) 50%, var(--barca-grenat) 100%);
-  }
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
-  header h1 {
-    margin: 0 0 6px; font-size: 26px;
-    background: linear-gradient(90deg, var(--barca-blue), var(--barca-grenat));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: inline-block;
-  }
-  header p.sub { margin: 0 0 24px; color: var(--muted); font-size: 13px; }
+  ::selection { background: var(--gold); color: var(--ink); }
+  a { color: var(--silver); }
 
-  .controls {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 18px;
-    margin-bottom: 24px;
+  /* ─────────  layout shell  ───────── */
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 32px 64px; }
+
+  /* ─────────  ticker (top status bar)  ───────── */
+  .ticker {
+    border-bottom: 1px solid var(--rule);
+    padding: 10px 0;
+    margin-bottom: 36px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--mist);
+    text-transform: uppercase;
     display: flex;
+    justify-content: space-between;
     flex-wrap: wrap;
+    gap: 8px 24px;
+  }
+  .ticker .live::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--grenat);
+    margin-right: 6px;
+    vertical-align: 1px;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(179, 22, 58, 0.7); }
+    50%      { box-shadow: 0 0 0 6px rgba(179, 22, 58, 0); }
+  }
+  .ticker .label { color: var(--silver); }
+  .ticker .sep   { color: var(--rule-bright); }
+
+  /* ─────────  masthead  ───────── */
+  .masthead {
+    position: relative;
+    padding: 12px 0 32px;
+    border-bottom: 2px solid var(--paper);
+    margin-bottom: 56px;
+    overflow: hidden;
+  }
+  .masthead::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -8px;
+    height: 1px;
+    background: var(--paper);
+    opacity: 0.4;
+  }
+  .masthead-shield {
+    position: absolute;
+    right: -40px;
+    top: -10px;
+    width: 220px;
+    opacity: 0.07;
+    pointer-events: none;
+  }
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 14px;
+    font-weight: 500;
+  }
+  h1.title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(42px, 7vw, 88px);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    color: var(--paper);
+    font-variation-settings: "opsz" 144;
+  }
+  h1.title em {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--silver);
+  }
+  .strap {
+    margin: 22px 0 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--mist);
+    letter-spacing: 0.04em;
+    max-width: 60ch;
+    line-height: 1.7;
+  }
+  .strap b { color: var(--silver); font-weight: 500; }
+
+  /* ─────────  section heading (editorial rule)  ───────── */
+  section { margin-bottom: 64px; }
+  .section-title {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin: 0 0 28px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 14px;
+  }
+  .section-title h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 28px;
+    letter-spacing: -0.01em;
+    color: var(--paper);
+  }
+  .section-title .num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .section-title .meta {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--mist);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ─────────  news feed  ───────── */
+  .day-block { margin-bottom: 32px; }
+  .day-header {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin: 0 0 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--rule-bright);
+    font-weight: 500;
+  }
+  .news-item {
+    padding: 18px 0 22px;
+    border-bottom: 1px solid var(--rule);
+    transition: padding-left 200ms ease;
+  }
+  .news-item:hover { padding-left: 8px; }
+  .news-item:last-child { border-bottom: none; }
+  .news-item .row1 {
+    display: flex;
+    align-items: center;
     gap: 14px;
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .news-item .journalist {
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.14em;
+  }
+  .news-item .row1 span:not(.journalist) { color: var(--mist); }
+  .news-item h4 {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.25;
+    letter-spacing: -0.012em;
+    font-variation-settings: "opsz" 36;
+  }
+  .news-item h4 a { color: var(--paper); text-decoration: none; }
+  .news-item h4 a:hover {
+    color: var(--gold);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+  .news-item .snippet {
+    margin: 0 0 12px;
+    color: var(--silver);
+    font-size: 14px;
+    line-height: 1.55;
+    max-width: 75ch;
+    opacity: 0.82;
+  }
+  .news-item .player-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .player-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--paper);
+    background: rgba(179, 22, 58, 0.18);
+    border: 1px solid var(--grenat);
+    padding: 3px 9px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .news-meta {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--mist);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .news-toggle {
+    margin-top: 20px;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--silver);
+    padding: 9px 18px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 200ms, color 200ms;
+  }
+  .news-toggle:hover { border-color: var(--gold); color: var(--gold); }
+  .news-empty {
+    border: 1px dashed var(--rule-bright);
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--mist);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* ─────────  picker (controls)  ───────── */
+  .controls {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) 2fr 2fr 2fr;
+    gap: 16px;
+    padding: 20px 24px;
+    background: var(--ink-rise);
+    border: 1px solid var(--rule);
+    border-left: 2px solid var(--gold);
+    margin-bottom: 32px;
     align-items: end;
   }
-  .field { display: flex; flex-direction: column; gap: 4px; min-width: 180px; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .field label {
-    font-size: 11px;
-    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--mist);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.16em;
+    font-weight: 500;
   }
-  select, button {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 9px 12px;
-    border-radius: 6px;
+  select {
+    background: var(--ink-deep);
+    border: 1px solid var(--rule);
+    color: var(--silver);
+    padding: 11px 14px;
+    font-family: var(--font-body);
     font-size: 14px;
-    font-family: inherit;
-    min-height: 38px;
+    min-height: 42px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none'><path d='M1 1l5 5 5-5' stroke='%23d4d8e0' stroke-width='1.5'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+    transition: border-color 150ms;
   }
-  select:focus { outline: 1px solid var(--barca-blue); border-color: var(--barca-blue); }
-  button { cursor: pointer; }
-  button:hover { border-color: var(--barca-grenat); }
-  button.primary {
-    background: var(--barca-blue);
-    border-color: var(--barca-blue);
-    color: white;
+  select:focus {
+    outline: none;
+    border-color: var(--gold);
   }
-  button.primary:hover { background: var(--barca-grenat); border-color: var(--barca-grenat); }
+  select:hover { border-color: var(--rule-bright); }
 
-  .player-cards { display: grid; gap: 16px; margin-bottom: 24px; }
-  .player-cards.cols-2 { grid-template-columns: 1fr 1fr; }
-  .player-cards.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-  .pcard {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--barca-blue);
-    border-radius: 8px;
-    padding: 16px 18px;
-  }
-  .pcard.rumor { border-left-color: var(--barca-grenat); }
-  .pcard h3 { margin: 0 0 4px; font-size: 18px; }
-  .pcard .meta { color: var(--muted); font-size: 12px; line-height: 1.6; }
-  .pcard .badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-  .badge {
-    background: var(--panel-2);
-    color: var(--muted);
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-  }
-  .badge.rumor { background: var(--barca-grenat); color: white; }
-  .badge.main { background: var(--barca-blue); color: white; }
-  .badge.athletic { background: #555; color: white; }
-
-  .stats-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--panel);
-    border-radius: 8px;
-    overflow: hidden;
-    font-size: 13px;
-  }
-  .stats-table th, .stats-table td {
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    text-align: right;
-  }
-  .stats-table th:first-child, .stats-table td:first-child { text-align: left; }
-  .stats-table thead th {
-    background: var(--panel-2);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--muted);
-  }
-  .stats-table tbody tr:last-child td { border-bottom: none; }
-  .stats-table td.win { color: var(--win); font-weight: 600; }
-  .stats-table td.loss { color: var(--muted); }
-
-  .empty {
-    background: var(--panel);
-    border-radius: 8px;
-    padding: 40px;
-    text-align: center;
-    color: var(--muted);
-    font-style: italic;
-  }
+  /* ─────────  comparison header  ───────── */
   .info-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    color: var(--muted);
-    font-size: 13px;
+    align-items: baseline;
+    margin: 8px 0 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--mist);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
   }
   .info-row .pos-tag {
-    color: var(--barca-gold);
+    color: var(--gold);
     font-weight: 600;
-    text-transform: uppercase;
-    font-size: 11px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.18em;
+    margin-right: 14px;
   }
 
-  footer {
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 12px;
+  /* ─────────  player dossiers  ───────── */
+  .player-cards {
+    display: grid;
+    gap: 0;
+    margin-bottom: 36px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
   }
-
-  /* News feed */
-  .news-section { margin-bottom: 32px; }
-  .news-meta { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
-  .day-block { margin-bottom: 20px; }
-  .day-header {
-    font-size: 11px;
-    color: var(--barca-gold);
+  .player-cards.cols-2 { grid-template-columns: 1fr 1fr; }
+  .player-cards.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .pcard {
+    position: relative;
+    padding: 28px 24px;
+    border-right: 1px solid var(--rule);
+    overflow: hidden;
+  }
+  .pcard:last-child { border-right: none; }
+  .pcard::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 56px;
+    background: var(--blue);
+  }
+  .pcard.rumor::before { background: var(--grenat); }
+  .pcard .jersey {
+    position: absolute;
+    right: 18px;
+    top: 14px;
+    font-family: var(--font-numeric);
+    font-weight: 800;
+    font-size: 84px;
+    line-height: 0.85;
+    color: var(--paper);
+    opacity: 0.07;
+    letter-spacing: -0.04em;
+    pointer-events: none;
+  }
+  .pcard.rumor .jersey { color: var(--grenat); opacity: 0.18; }
+  .pcard .pcard-source {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    color: var(--mist);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .pcard.main .pcard-source { color: var(--blue); }
+  .pcard.rumor .pcard-source { color: var(--grenat); }
+  .pcard h3 {
     margin: 0 0 8px;
-    padding-bottom: 4px;
-    border-bottom: 1px dashed var(--border);
-  }
-  .news-item {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--barca-blue);
-    border-radius: 6px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-  }
-  .news-item .row1 {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-  .news-item .journalist {
-    background: var(--barca-blue);
-    color: white;
-    padding: 1px 8px;
-    border-radius: 10px;
+    font-family: var(--font-display);
     font-weight: 500;
+    font-size: 26px;
+    line-height: 1.05;
+    letter-spacing: -0.018em;
+    color: var(--paper);
+    font-variation-settings: "opsz" 72;
   }
-  .news-item h4 {
-    margin: 2px 0 4px;
-    font-size: 14px;
-    line-height: 1.35;
+  .pcard .meta {
+    color: var(--silver);
+    opacity: 0.78;
+    font-size: 12.5px;
+    line-height: 1.7;
   }
-  .news-item h4 a { color: var(--text); text-decoration: none; }
-  .news-item h4 a:hover { color: var(--barca-grenat); text-decoration: underline; }
-  .news-item .snippet { color: var(--muted); font-size: 12.5px; margin: 0 0 6px; }
-  .news-item .player-tags { display: flex; gap: 4px; flex-wrap: wrap; }
-  .player-tag {
-    background: var(--barca-grenat);
-    color: white;
-    padding: 1px 8px;
-    border-radius: 10px;
+  .pcard .league-line {
+    display: block;
+    margin-top: 4px;
+    font-family: var(--font-mono);
     font-size: 10.5px;
-    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--mist);
+    text-transform: uppercase;
   }
-  .news-toggle {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 6px 14px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    margin-top: 8px;
-  }
-  .news-toggle:hover { color: var(--text); }
-  .news-empty {
-    color: var(--muted);
+  .pcard .note {
+    display: block;
+    margin-top: 12px;
+    font-family: var(--font-display);
     font-style: italic;
-    padding: 16px;
-    background: var(--panel);
-    border-radius: 6px;
-    text-align: center;
+    font-size: 13px;
+    color: var(--gold);
+    line-height: 1.5;
+    border-left: 2px solid var(--gold);
+    padding-left: 10px;
+    opacity: 0.85;
   }
 
-  @media (max-width: 800px) {
-    .player-cards.cols-2, .player-cards.cols-3 { grid-template-columns: 1fr; }
-    .controls { flex-direction: column; align-items: stretch; }
-    .field { width: 100%; }
+  /* ─────────  stats ledger  ───────── */
+  .stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+  }
+  .stats-table thead th {
+    padding: 14px 16px;
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--mist);
+    font-weight: 500;
+    border-bottom: 1px solid var(--paper);
+  }
+  .stats-table thead th:first-child { text-align: left; color: var(--paper); }
+  .stats-table tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--silver);
+    font-feature-settings: "tnum";
+  }
+  .stats-table tbody td:first-child {
+    text-align: left;
+    font-family: var(--font-body);
+    color: var(--silver);
+    font-size: 13.5px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .stats-table tbody tr:last-child td { border-bottom: none; }
+  .stats-table tbody tr:hover td { background: rgba(240, 232, 214, 0.02); }
+  .stats-table td.win {
+    color: var(--gold);
+    font-weight: 600;
+    position: relative;
+  }
+  .stats-table td.win::before {
+    content: "▲";
+    margin-right: 6px;
+    font-size: 9px;
+    vertical-align: 2px;
+  }
+  .stats-table td.loss { color: var(--mist); }
+
+  /* ─────────  empty states  ───────── */
+  .empty {
+    border: 1px dashed var(--rule-bright);
+    padding: 56px 24px;
+    text-align: center;
+    color: var(--mist);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 16px;
+  }
+
+  /* ─────────  footer  ───────── */
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    color: var(--mist);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    line-height: 1.7;
+  }
+  footer code {
+    color: var(--silver);
+    background: var(--ink-rise);
+    padding: 1px 6px;
+    font-size: 10px;
+  }
+
+  /* ─────────  staggered page-load reveal  ───────── */
+  .reveal { opacity: 0; transform: translateY(8px); animation: reveal 700ms ease forwards; }
+  .reveal.d1 { animation-delay: 50ms; }
+  .reveal.d2 { animation-delay: 150ms; }
+  .reveal.d3 { animation-delay: 280ms; }
+  .reveal.d4 { animation-delay: 420ms; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─────────  responsive  ───────── */
+  @media (max-width: 900px) {
+    .controls { grid-template-columns: 1fr 1fr; }
+    .player-cards.cols-2, .player-cards.cols-3 {
+      grid-template-columns: 1fr;
+      border-right: none;
+    }
+    .pcard { border-right: none; border-bottom: 1px solid var(--rule); }
+    .pcard:last-child { border-bottom: none; }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 0 18px 48px; }
+    .controls { grid-template-columns: 1fr; }
+    h1.title { font-size: 44px; }
   }
 </style>
 </head>
 <body>
-<div class="stripe"></div>
 <div class="wrap">
 
-<header>
-  <h1>Centro de Transferências FC Barcelona</h1>
-  <p class="sub">Janela de transferências 2026 · Comparação entre especulados e elenco atual · Fonte: SofaScore</p>
+<div class="ticker reveal d1" id="ticker-bar">
+  <span><span class="live">LIVE</span> · MONITOR ATIVO</span>
+  <span><span class="label">JANELA</span> <span class="sep">/</span> VERÃO 2026</span>
+  <span><span class="label">FONTES</span> <span class="sep">/</span> 7 JORNALISTAS</span>
+  <span id="ticker-date"></span>
+</div>
+
+<header class="masthead reveal d2">
+  <svg class="masthead-shield" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="6" stroke="#f0e8d6" stroke-width="0.6"/>
+      </pattern>
+    </defs>
+    <path d="M50 0 L100 18 L100 70 Q100 110 50 130 Q0 110 0 70 L0 18 Z" fill="none" stroke="#f0e8d6" stroke-width="2"/>
+    <path d="M50 12 L88 26 L88 68 Q88 100 50 116 Q12 100 12 68 L12 26 Z" fill="url(#hatch)" stroke="#f0e8d6" stroke-width="1"/>
+    <line x1="50" y1="12" x2="50" y2="116" stroke="#f0e8d6" stroke-width="1"/>
+    <line x1="12" y1="64" x2="88" y2="64" stroke="#f0e8d6" stroke-width="1"/>
+  </svg>
+  <p class="kicker">Mercado · Janela 2026 · Edição diária</p>
+  <h1 class="title">Transfer<br><em>Desk</em>&nbsp;FCB.</h1>
+  <p class="strap">
+    Centro de monitoramento de rumores e comparação de jogadores especulados contra o elenco do <b>FC&nbsp;Barcelona</b>. Atualizado três vezes ao dia a partir de fontes selecionadas <b>(Romano · Romero · Moretto · Rahman · Juanmartí · Piera · Soldevila)</b>. Estatísticas de desempenho via <b>SofaScore</b>, temporada 25/26.
+  </p>
 </header>
 
-<section class="news-section">
-  <h2 style="font-size:18px;margin:0 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">📰 Feed de notícias</h2>
-  <p class="news-meta" id="news-meta"></p>
+<section class="news-section reveal d3">
+  <div class="section-title">
+    <span class="num">§ 01</span>
+    <h2>Feed de notícias</h2>
+    <span class="meta" id="news-meta"></span>
+  </div>
   <div id="news-feed"></div>
   <button class="news-toggle" id="news-toggle" style="display:none">Mostrar mais ↓</button>
 </section>
 
-<section>
+<section class="reveal d4">
+  <div class="section-title">
+    <span class="num">§ 02</span>
+    <h2>Comparador</h2>
+    <span class="meta">Especulados × Elenco atual</span>
+  </div>
   <div class="controls">
     <div class="field">
-      <label for="position-select">1. Escolha a posição</label>
+      <label for="position-select">Posição</label>
       <select id="position-select">
         <option value="">— selecione —</option>
       </select>
     </div>
     <div class="field">
-      <label for="num-players">Quantos comparar</label>
+      <label for="num-players">Comparar</label>
       <select id="num-players">
         <option value="2">2 jogadores</option>
         <option value="3">3 jogadores</option>
       </select>
     </div>
     <div class="field" id="player1-field" style="display:none">
-      <label for="player1-select">Jogador 1</label>
+      <label for="player1-select">Jogador A</label>
       <select id="player1-select"></select>
     </div>
     <div class="field" id="player2-field" style="display:none">
-      <label for="player2-select">Jogador 2</label>
+      <label for="player2-select">Jogador B</label>
       <select id="player2-select"></select>
     </div>
     <div class="field" id="player3-field" style="display:none">
-      <label for="player3-select">Jogador 3</label>
+      <label for="player3-select">Jogador C</label>
       <select id="player3-select"></select>
     </div>
   </div>
 
   <div id="comparison-area">
-    <div class="empty">
-      Escolha uma posição e os jogadores para comparar.
-    </div>
+    <div class="empty">Escolha uma posição e os jogadores para comparar.</div>
   </div>
 </section>
 
 <footer>
-  <p>Dados gerados a partir de <code>cache/stats.json</code> (SofaScore, temporada 25/26).
-  Para atualizar: rodar <code>scrape_squad.py</code> + <code>scrape_rumors.py</code> +
-  <code>scrape_stats.py</code> + <code>build.py</code>.</p>
+  <p>Dados via <code>cache/stats.json</code> · SofaScore 25/26 · regerado por <code>build.py</code> a cada execução da rotina <code>/schedule</code>.</p>
+  <p>Cores: <span style="color:#1a4faf">azul Barça</span> · <span style="color:#b3163a">grená</span> · <span style="color:#f5c518">ouro catalão</span> · sobre tinta marinha.</p>
 </footer>
 
 </div>
@@ -578,23 +907,28 @@ function render() {
 
   const stats = window.DATA.stats_by_group[group];
 
-  // Cards header
+  // Player dossier cards
   const cardsHtml = selected.map(p => {
     const sourceLabel = sourceMeta(p.source).label_short;
+    const sourceClass = p.source || "main";
+    const jerseyDisplay = p.jersey != null ? p.jersey : "—";
+    const bioBits = [
+      p.age ? `${p.age} anos` : null,
+      p.height ? `${p.height} cm` : null,
+      p.preferredFoot ? `pé ${esc(p.preferredFoot.toLowerCase())}` : null,
+    ].filter(Boolean).join(" · ");
     return `
-      <div class="pcard ${p.source === 'rumor' ? 'rumor' : ''}">
-        <h3>${p.name}</h3>
+      <article class="pcard ${esc(sourceClass)}">
+        <span class="jersey">${esc(jerseyDisplay)}</span>
+        <p class="pcard-source">${esc(sourceLabel)} · ${esc(p.position_refined)}</p>
+        <h3>${esc(p.name)}</h3>
         <div class="meta">
-          ${p.team}${p.country ? ` · ${p.country}` : ""}<br>
-          ${p.age ? `${p.age} anos` : "Idade ?"}${p.height ? ` · ${p.height}cm` : ""}${p.preferredFoot ? ` · pé ${p.preferredFoot.toLowerCase()}` : ""}<br>
-          <span style="color: var(--muted)">Liga: ${p.league || "—"} · ${p.position_refined}</span>
-          ${p.note ? `<br><span style="color: var(--muted); font-style: italic">${p.note}</span>` : ""}
+          ${esc(p.team)}${p.country ? ` · ${esc(p.country)}` : ""}<br>
+          ${esc(bioBits)}
+          <span class="league-line">${esc(p.league || "—")}</span>
+          ${p.note ? `<span class="note">${esc(p.note)}</span>` : ""}
         </div>
-        <div class="badges">
-          <span class="badge ${p.source}">${sourceLabel}</span>
-          ${p.jersey ? `<span class="badge">#${p.jersey}</span>` : ""}
-        </div>
-      </div>`;
+      </article>`;
   }).join("");
 
   // Stats table — marca o melhor entre os selecionados
@@ -622,13 +956,13 @@ function render() {
     rowsHtml += `<tr><td>${stat.label}</td>${cells}</tr>`;
   }
 
-  const headers = selected.map(p => `<th>${p.shortName || p.name}</th>`).join("");
+  const headers = selected.map(p => `<th>${esc(p.shortName || p.name)}</th>`).join("");
   const groupLabel = window.DATA.groups[group];
 
   compArea.innerHTML = `
     <div class="info-row">
-      <span><span class="pos-tag">${groupLabel}</span> — ${selected.length} jogadores · stats temporada 25/26</span>
-      <span>Melhor valor por linha em verde</span>
+      <span><span class="pos-tag">${esc(groupLabel)}</span>${selected.length} jogadores · stats 25/26</span>
+      <span>▲ vencedor por 90 min · — sem dados</span>
     </div>
     <div class="player-cards cols-${selected.length}">${cardsHtml}</div>
     <table class="stats-table">
@@ -754,6 +1088,16 @@ document.getElementById("news-toggle").addEventListener("click", () => {
 });
 
 renderNews();
+
+// Ticker date
+(() => {
+  const el = document.getElementById("ticker-date");
+  if (!el) return;
+  const now = new Date();
+  const wd = now.toLocaleDateString("pt-BR", { weekday: "long" }).toUpperCase();
+  const dt = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).toUpperCase();
+  el.innerHTML = `<span class="label">${wd}</span> <span class="sep">/</span> ${dt}`;
+})();
 </script>
 </body>
 </html>"""
