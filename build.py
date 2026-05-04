@@ -183,6 +183,7 @@ HEAD_OPEN = r"""<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Big+Shoulders+Display:wght@600;800;900&family=Allura&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root {
     --ink: #0c0e1c;
@@ -1099,6 +1100,28 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     font-size: 16px;
   }
 
+  /* ─── botão exportar ─── */
+  .export-btn {
+    margin: 24px 0 8px;
+    background: var(--gold);
+    border: none;
+    color: var(--ink);
+    padding: 14px 24px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 200ms, background 200ms;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .export-btn:hover { transform: translateY(-2px); background: var(--paper); }
+  .export-btn:disabled { opacity: 0.6; cursor: wait; }
+  .export-btn .icon { font-size: 14px; }
+
   /* ─── footer ─── */
   footer {
     margin-top: 80px;
@@ -1694,16 +1717,94 @@ function renderComparison() {
   const groupLabel = window.DATA.groups[activeGroup];
 
   compEl.innerHTML = `
-    <div class="info-row">
-      <span><span class="pos-tag">${esc(groupLabel)}</span>${selected.length} jogadores · stats 25/26</span>
-      <span>▲ vencedor por 90 min · — sem dados</span>
+    <div id="export-target">
+      <div class="info-row">
+        <span><span class="pos-tag">${esc(groupLabel)}</span>${selected.length} jogadores · stats 25/26</span>
+        <span>▲ vencedor por 90 min · — sem dados</span>
+      </div>
+      <div class="player-cards cols-${selected.length}">${cardsHtml}</div>
+      <table class="stats-table">
+        <thead><tr><th>Estatística</th>${headers}</tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
     </div>
-    <div class="player-cards cols-${selected.length}">${cardsHtml}</div>
-    <table class="stats-table">
-      <thead><tr><th>Estatística</th>${headers}</tr></thead>
-      <tbody>${rowsHtml}</tbody>
-    </table>
+    <button class="export-btn" id="export-btn"><span class="icon">📸</span> Salvar imagem</button>
   `;
+  const btn = document.getElementById("export-btn");
+  if (btn) btn.addEventListener("click", exportComparisonImage);
+}
+
+async function exportComparisonImage() {
+  const btn = document.getElementById("export-btn");
+  const target = document.getElementById("export-target");
+  if (!target || !btn) return;
+  if (typeof html2canvas === "undefined") {
+    alert("Biblioteca html2canvas não carregou. Recarregue a página.");
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="icon">⏳</span> Gerando...';
+
+  // Cria container off-screen com branding embutido
+  const wrap = document.createElement("div");
+  wrap.style.cssText = `
+    position: fixed; left: -10000px; top: 0; width: 1080px;
+    padding: 32px 36px 28px; background: #0c0e1c;
+    font-family: "Manrope", system-ui, sans-serif;
+    color: #d4d8e0;
+  `;
+  const date = new Date().toLocaleDateString("pt-BR", {day:"2-digit", month:"long", year:"numeric"});
+  const playerNames = selectedIds.map(id => {
+    const p = playerById(id);
+    return p ? (p.shortName || p.name) : "";
+  }).filter(Boolean).join(" × ");
+  wrap.innerHTML = `
+    <div style="height:5px; background: linear-gradient(to right, #1a4faf 50%, #b3163a 50%); margin: -32px -36px 24px;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #2a2e48;">
+      <div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: #f5c518; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">COMPARADOR · TRANSFER DESK FCB</div>
+        <div style="font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; font-size: 28px; color: #f0e8d6; line-height: 1;">${esc(playerNames)}</div>
+      </div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #6b7388; text-align: right; line-height: 1.6; letter-spacing: 0.06em;">
+        cauamatheus7.github.io/barca-transfers<br>
+        <span style="color: #d4d8e0">${esc(date)}</span>
+      </div>
+    </div>
+    ${target.outerHTML}
+    <div style="margin-top: 22px; padding-top: 14px; border-top: 1px solid #1f2236; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #6b7388;">
+      <span>Stats: SofaScore 25/26</span>
+      <span>Valor: Transfermarkt</span>
+      <span style="font-family: 'Allura', cursive; font-size: 22px; text-transform: none; letter-spacing: 0; color: #f0e8d6; opacity: 0.6;">cauamxt</span>
+    </div>
+  `;
+  document.body.appendChild(wrap);
+
+  try {
+    // Aguarda fontes carregarem
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const canvas = await html2canvas(wrap, {
+      backgroundColor: "#0c0e1c",
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      windowWidth: 1080,
+    });
+    const link = document.createElement("a");
+    const filename = `transfer-desk_${selectedIds.map(id => {
+      const p = playerById(id);
+      return p ? (p.shortName || p.name).replace(/\s+/g, "") : "p";
+    }).join("_vs_")}.png`;
+    link.download = filename;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao gerar imagem. Tenta de novo.");
+  } finally {
+    document.body.removeChild(wrap);
+    btn.disabled = false;
+    btn.innerHTML = '<span class="icon">📸</span> Salvar imagem';
+  }
 }
 
 function renderAll() {
