@@ -378,17 +378,17 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     overflow: hidden;
     margin-bottom: 14px;
     border: 1px solid var(--rule);
-    background: var(--ink-rise);
+    background: #f4f4f4;
   }
-  /* Foto retrato preenche card inteiro */
+  /* Foto contida (zoom out) — fundo branco do card combina com fundo das fotos TM */
   .news-card .cover img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: center 20%;
+    object-fit: contain;
+    object-position: center top;
     transition: transform 600ms ease;
   }
-  .news-card:hover .cover img { transform: scale(1.04); }
+  .news-card:hover .cover img { transform: scale(1.03); }
   /* Text cover (no player matched) */
   .news-card .cover.text {
     align-items: flex-end;
