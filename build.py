@@ -135,13 +135,14 @@ def merge_data() -> list[dict]:
 
 
 def _build_payload(players: list[dict]) -> dict:
+    from datetime import timezone
     usable = [p for p in players if p["stats"] and p["position_group"]]
     news = load_news()
     pid_to_name = {p["id"]: p["name"] for p in usable}
-    # Rumors com qualquer informação útil (todos os 16, mesmo se confidence=0)
     rumors = [p for p in players if p.get("source") == "rumor"]
     return {
         "generated": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "generated_iso": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "groups": POSITION_GROUPS_UI,
         "sources": SOURCES,
         "stats_by_group": {
@@ -1161,6 +1162,7 @@ def _masthead(active: str) -> str:
 
 <div class="ticker reveal d1" id="ticker-bar">
   <span class="kicker-mercado">MERCADO</span>
+  <span id="last-updated"></span>
   <span id="ticker-date"></span>
 </div>
 
@@ -1263,6 +1265,30 @@ function initials(name) {
   const dt = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).toUpperCase();
   el.innerHTML = `<span class="label">${esc(wd)}</span> <span class="sep">/</span> ${esc(dt)}`;
 })();
+
+// "Atualizado há X" — calcula relativo a window.DATA.generated_iso
+function formatLastUpdated() {
+  const el = document.getElementById("last-updated");
+  if (!el) return;
+  const iso = window.DATA && window.DATA.generated_iso;
+  if (!iso) { el.textContent = ""; return; }
+  const gen = new Date(iso);
+  if (isNaN(gen)) { el.textContent = ""; return; }
+  const diffMin = Math.floor((Date.now() - gen.getTime()) / 60000);
+  let label;
+  if (diffMin < 1) label = "AGORA MESMO";
+  else if (diffMin < 60) label = `HÁ ${diffMin} MIN`;
+  else if (diffMin < 60 * 24) {
+    const h = Math.floor(diffMin / 60);
+    const m = diffMin % 60;
+    label = m > 0 && h < 5 ? `HÁ ${h}H ${m}MIN` : `HÁ ${h}H`;
+  } else {
+    label = `HÁ ${Math.floor(diffMin / (60 * 24))}D`;
+  }
+  el.innerHTML = `<span class="label">ATUALIZADO</span> <span class="sep">/</span> ${label}`;
+}
+formatLastUpdated();
+setInterval(formatLastUpdated, 60000);  // atualiza a cada minuto
 """
 
 
