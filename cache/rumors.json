@@ -22,7 +22,8 @@
       "mentions_count": 2,
       "latest_news_url": "https://x.com/MatteMoretto/status/2017549146178146701",
       "latest_news_title": "Matteo Moretto: Barcelona is already negotiating Alessandro Bastoni's contract details",
-      "latest_news_journalist": "Matteo Moretto"
+      "latest_news_journalist": "Matteo Moretto",
+      "confidence": 55
     },
     {
       "id": 1199282,
@@ -45,7 +46,8 @@
       "mentions_count": 1,
       "latest_news_url": "https://madrid-barcelona.com/en/fc-barcelona/matteo-moretto-reveals-the-center-back-that-fc-barcelona-wants-to-sign-good-beautiful-and-cheap-bargain",
       "latest_news_title": "Matteo Moretto reveals the center-back that FC Barcelona want to sign: good, pretty, and cheap",
-      "latest_news_journalist": "Matteo Moretto"
+      "latest_news_journalist": "Matteo Moretto",
+      "confidence": 20
     },
     {
       "id": 944656,
@@ -68,7 +70,8 @@
       "mentions_count": 1,
       "latest_news_url": "https://www.facebook.com/barcanews24x7/posts/-fabrizio-romano-confirms-barcelona-has-made-an-enquiry-for-juli%C3%A1n-alvarez",
       "latest_news_title": "Fabrizio Romano confirms Barcelona has made an enquiry for Julián Álvarez",
-      "latest_news_journalist": "Fabrizio Romano"
+      "latest_news_journalist": "Fabrizio Romano",
+      "confidence": 43
     },
     {
       "id": 814590,
@@ -91,7 +94,8 @@
       "mentions_count": 1,
       "latest_news_url": "https://x.com/tjuanmarti/status/1463556118735687680",
       "latest_news_title": "Toni Juanmartí: Joaquim Piera explica que Artur Cabral es el elegido para reforzar la delantera",
-      "latest_news_journalist": "Toni Juanmartí"
+      "latest_news_journalist": "Toni Juanmartí",
+      "confidence": 16
     },
     {
       "id": 975079,
@@ -111,7 +115,8 @@
       "current_team": "Chelsea",
       "current_team_id": 38,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 832208,
@@ -131,7 +136,8 @@
       "current_team": "Juventus",
       "current_team_id": 2687,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 851284,
@@ -151,7 +157,8 @@
       "current_team": "Milan",
       "current_team_id": 2692,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 1100952,
@@ -171,7 +178,8 @@
       "current_team": "Benfica",
       "current_team_id": 3006,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 1011375,
@@ -191,7 +199,8 @@
       "current_team": "Real Betis",
       "current_team_id": 2816,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 1939173,
@@ -211,7 +220,8 @@
       "current_team": "Mallorca",
       "current_team_id": 2826,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 1466116,
@@ -231,7 +241,8 @@
       "current_team": "Real Sociedad",
       "current_team_id": 2824,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 818481,
@@ -251,7 +262,8 @@
       "current_team": "Bologna",
       "current_team_id": 2685,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 1001196,
@@ -271,7 +283,8 @@
       "current_team": "Sporting CP",
       "current_team_id": 3001,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 940871,
@@ -291,7 +304,8 @@
       "current_team": "Borussia Dortmund",
       "current_team_id": 2673,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 877994,
@@ -311,7 +325,8 @@
       "current_team": "Manchester City",
       "current_team_id": 17,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     },
     {
       "id": 791773,
@@ -331,8 +346,9 @@
       "current_team": "Real Sociedad",
       "current_team_id": 2824,
       "last_seen": null,
-      "mentions_count": 0
+      "mentions_count": 0,
+      "confidence": 0
     }
   ],
-  "last_processed": "2026-05-04T15:20:36+00:00"
+  "last_processed": "2026-05-04T18:16:08+00:00"
 }

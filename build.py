@@ -114,6 +114,7 @@ def merge_data() -> list[dict]:
             "stats": s.get("stats") or {},
             "last_seen": p.get("last_seen"),
             "mentions_count": p.get("mentions_count", 0),
+            "confidence": p.get("confidence", 0),
             "latest_news_url": p.get("latest_news_url"),
             "latest_news_title": p.get("latest_news_title"),
             "latest_news_journalist": p.get("latest_news_journalist"),
@@ -126,6 +127,8 @@ def _build_payload(players: list[dict]) -> dict:
     usable = [p for p in players if p["stats"] and p["position_group"]]
     news = load_news()
     pid_to_name = {p["id"]: p["name"] for p in usable}
+    # Rumors com qualquer informação útil (todos os 16, mesmo se confidence=0)
+    rumors = [p for p in players if p.get("source") == "rumor"]
     return {
         "generated": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "groups": POSITION_GROUPS_UI,
@@ -135,6 +138,7 @@ def _build_payload(players: list[dict]) -> dict:
             for g in POSITION_GROUPS_UI
         },
         "players": usable,
+        "rumors": rumors,
         "news": news,
         "player_names": pid_to_name,
     }
@@ -518,6 +522,140 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     font-size: 12px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+  }
+
+  /* ─── Nomes na pauta ─── */
+  .rumors-explainer {
+    color: var(--silver);
+    opacity: 0.78;
+    font-size: 13.5px;
+    line-height: 1.6;
+    max-width: 70ch;
+    margin: 0 0 24px;
+  }
+  .rumors-explainer b { color: var(--paper); font-weight: 600; }
+  .rumors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+  }
+  .rumor-card {
+    background: var(--ink-rise);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--grenat);
+    padding: 16px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 240ms ease, border-color 240ms ease;
+  }
+  .rumor-card:hover {
+    transform: translateY(-3px);
+    border-top-color: var(--gold);
+  }
+  .rumor-card.cold {
+    border-top-color: var(--rule-bright);
+    opacity: 0.7;
+  }
+  .rumor-card .photo-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    margin-bottom: 14px;
+    background: var(--ink-deep);
+  }
+  .rumor-card .photo-wrap .bg {
+    position: absolute;
+    inset: -8%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(22px) saturate(1.3) brightness(0.5);
+    z-index: 1;
+  }
+  .rumor-card .photo-wrap img {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    padding: 10px 0;
+    box-sizing: border-box;
+  }
+  .rumor-card h4 {
+    margin: 0 0 4px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 1.15;
+    color: var(--paper);
+    letter-spacing: -0.012em;
+  }
+  .rumor-card .rumor-meta {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    color: var(--mist);
+    text-transform: uppercase;
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+  .rumor-card .rumor-meta .pos { color: var(--gold); }
+  .rumor-card .conf {
+    margin: auto 0 12px;
+  }
+  .rumor-card .conf-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--mist);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+  .rumor-card .conf-pct {
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .rumor-card.cold .conf-pct { color: var(--mist); }
+  .rumor-card .conf-bar {
+    height: 3px;
+    background: var(--rule);
+    overflow: hidden;
+    position: relative;
+  }
+  .rumor-card .conf-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--grenat) 0%, var(--gold) 100%);
+    transition: width 900ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .rumor-card .latest-news {
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--silver);
+    opacity: 0.72;
+    margin: 0;
+  }
+  .rumor-card .latest-news .src {
+    color: var(--gold);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 3px;
+    opacity: 0.95;
+  }
+  .rumor-card .no-news {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--mist);
+    text-transform: uppercase;
+    opacity: 0.6;
   }
 
   /* ───────────────────────────────────────────
@@ -1058,6 +1196,21 @@ INDEX_BODY = r"""
   <div id="news-feed"></div>
   <button class="news-toggle" id="news-toggle" style="display:none">Mostrar mais ↓</button>
 </section>
+
+<section class="reveal d4">
+  <div class="section-title">
+    <span class="num">§ 02</span>
+    <h2>Nomes na pauta</h2>
+    <span class="meta" id="rumors-meta"></span>
+  </div>
+  <p class="rumors-explainer">
+    Especulados ligados ao Barça nesta janela, ranqueados por <b>confiança</b> —
+    fórmula combina peso do jornalista (Romano > Moretto > demais), número de
+    fontes independentes reportando, e keywords de confirmação ("here we go",
+    "fichaje confirmado", etc.).
+  </p>
+  <div id="rumors-grid" class="rumors-grid"></div>
+</section>
 """
 
 
@@ -1157,6 +1310,61 @@ document.getElementById("news-toggle").addEventListener("click", () => {
 });
 
 renderNews();
+
+// ====== NOMES NA PAUTA (rumors with confidence) ======
+function renderRumors() {
+  const grid = document.getElementById("rumors-grid");
+  const meta = document.getElementById("rumors-meta");
+  const rumors = (window.DATA.rumors || []).slice();
+  if (!grid) return;
+  if (rumors.length === 0) {
+    grid.innerHTML = `<div class="news-empty">Sem rumores ativos</div>`;
+    return;
+  }
+  // Sort by confidence desc, then by mentions desc, then alpha
+  rumors.sort((a, b) =>
+    (b.confidence || 0) - (a.confidence || 0) ||
+    (b.mentions_count || 0) - (a.mentions_count || 0) ||
+    a.name.localeCompare(b.name)
+  );
+  const active = rumors.filter(r => (r.confidence || 0) > 0).length;
+  meta.textContent = `${rumors.length} especulados · ${active} com menções recentes`;
+
+  grid.innerHTML = rumors.map(r => {
+    const conf = r.confidence || 0;
+    const photoSrc = PHOTO_URL(r.id);
+    const cold = conf === 0 ? "cold" : "";
+    const positionLabel = sourceMeta(r.source).label_short;
+    const latestHtml = r.latest_news_url
+      ? `<p class="latest-news">
+           <span class="src">${esc(r.latest_news_journalist || "?")}</span>
+           <a href="${esc(r.latest_news_url)}" target="_blank" rel="noopener">${esc((r.latest_news_title || "").slice(0, 90))}${(r.latest_news_title || "").length > 90 ? "…" : ""}</a>
+         </p>`
+      : `<p class="no-news">— sem menções ainda</p>`;
+    return `
+      <article class="rumor-card ${cold}">
+        <div class="photo-wrap">
+          <div class="bg" style="background-image: url('${photoSrc}')"></div>
+          <img src="${photoSrc}" alt="${esc(r.name)}" loading="lazy" onerror="this.style.display='none'">
+        </div>
+        <h4>${esc(r.name)}</h4>
+        <p class="rumor-meta">
+          ${esc(r.team || "?")} · <span class="pos">${esc(r.position_refined || "?")}</span>
+          ${r.note ? `<br><span style="opacity:0.85">${esc(r.note)}</span>` : ""}
+        </p>
+        <div class="conf">
+          <div class="conf-row">
+            <span>Confiança</span>
+            <span class="conf-pct">${conf}%</span>
+          </div>
+          <div class="conf-bar"><div class="conf-fill" style="width:${conf}%"></div></div>
+        </div>
+        ${latestHtml}
+      </article>`;
+  }).join("");
+}
+
+renderRumors();
 """
 
 

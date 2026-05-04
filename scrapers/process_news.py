@@ -27,6 +27,60 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 CACHE = ROOT / "cache"
 
+# Pesos pra cálculo de confiança da transferência: jornalistas com histórico
+# de furos confirmados pesam mais. "Geral" são as queries genéricas (passos 8-9).
+JOURNALIST_TIER = {
+    "Fabrizio Romano":    3.0,
+    "Matteo Moretto":     2.5,
+    "Gerard Romero":      2.0,
+    "Reshad Rahman":      2.0,
+    "Toni Juanmartí":     2.0,
+    "Joaquim Piera":      2.0,
+    "Adrià Soldevila":    2.0,
+    "Geral":              1.0,
+}
+
+# Keywords que sinalizam "deal done" / "here we go" — bônus na confiança
+CONFIRMED_KEYWORDS = [
+    "here we go", "done deal", "deal done", "agreement reached", "all done",
+    "confirmado", "fichaje confirmado", "anunciar", "será do", "se concretó",
+    "official", "oficial",
+]
+
+
+def compute_confidence(player_id: int, news_items: list[dict]) -> int:
+    """Score 0-100 baseado em volume + tier + diversidade + keywords confirmatórias."""
+    mentions = [it for it in news_items if player_id in (it.get("players_mentioned") or [])]
+    if not mentions:
+        return 0
+
+    by_journalist: dict[str, list[dict]] = {}
+    for it in mentions:
+        j = it.get("journalist") or "Geral"
+        by_journalist.setdefault(j, []).append(it)
+
+    score = 0.0
+    for j, items in by_journalist.items():
+        tier = JOURNALIST_TIER.get(j, 1.0)
+        # Diminishing returns: cada jornalista contribui no máx 2x mesmo com 5+ itens
+        score += tier * min(2.0, len(items))
+        # Bônus de "here we go": qualquer item desse jornalista com keyword confirma
+        for it in items:
+            text = ((it.get("title") or "") + " " + (it.get("snippet") or "")).lower()
+            if any(kw in text for kw in CONFIRMED_KEYWORDS):
+                score += tier * 0.8
+                break
+
+    # Bônus de diversidade
+    n_journalists = len(by_journalist)
+    if n_journalists >= 3:
+        score *= 1.5
+    elif n_journalists == 2:
+        score *= 1.25
+
+    # Mapeia score (~5-30 típico) pra 0-100, clamp
+    return max(0, min(100, int(score * 8)))
+
 
 def slugify(s: str) -> str:
     """Sem acento + lowercase + sem pontuação — pra comparação fuzzy de nomes.
@@ -166,8 +220,9 @@ def merge_news(existing: dict, raw: dict, name_index: dict[str, int]) -> dict:
 
 
 def update_rumor_activity(rumors_data: dict, news_data: dict) -> dict:
-    """Bumpa last_seen / latest_news_* em cada rumor baseado no feed."""
+    """Bumpa last_seen / latest_news_* + confidence em cada rumor."""
     items = news_data.get("items", [])
+    all_items = items  # alias pra clareza no compute_confidence
     # Reverse map: player_id -> [news items mencionando ele] (já em ordem desc)
     by_player: dict[int, list[dict]] = {}
     for it in items:
@@ -179,6 +234,7 @@ def update_rumor_activity(rumors_data: dict, news_data: dict) -> dict:
         if not mentions:
             player.setdefault("last_seen", None)
             player.setdefault("mentions_count", 0)
+            player["confidence"] = 0
             continue
         latest = mentions[0]
         player["last_seen"] = latest.get("published_at") or latest.get("last_seen")
@@ -186,6 +242,7 @@ def update_rumor_activity(rumors_data: dict, news_data: dict) -> dict:
         player["latest_news_url"] = latest["url"]
         player["latest_news_title"] = latest["title"]
         player["latest_news_journalist"] = latest.get("journalist", "")
+        player["confidence"] = compute_confidence(player["id"], all_items)
 
     # Reordena por last_seen desc (None vai pro fim)
     rumors_data["players"].sort(
