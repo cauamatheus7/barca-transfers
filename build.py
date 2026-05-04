@@ -960,9 +960,6 @@ def _masthead(active: str) -> str:
   </svg>
   <p class="kicker">Mercado · Janela 2026 · Edição diária</p>
   <h1 class="title">Transfer<br><em>Desk</em>&nbsp;FCB.</h1>
-  <p class="strap">
-    Centro de monitoramento de rumores e comparação de jogadores especulados contra o elenco do <b>FC&nbsp;Barcelona</b>. Atualizado três vezes ao dia a partir de fontes selecionadas <b>(Romano · Romero · Moretto · Rahman · Juanmartí · Piera · Soldevila)</b>. Estatísticas via <b>SofaScore</b>, temporada 25/26.
-  </p>
   <nav class="page-nav">
     <a href="index.html" class="{cls_idx}">Notícias</a>
     <a href="comparador.html" class="{cls_cmp}">Comparador</a>
@@ -978,7 +975,9 @@ FOOTER_HTML = r"""
 
 SHARED_SCRIPT = r"""
 window.DATA = __DATA__;
-const SOFASCORE_IMG = "https://api.sofascore.com/api/v1/player/";
+// Fotos locais (baixadas via scrapers/fetch_photos.py) — evita bloqueio ORB do Chrome
+// quando carregadas direto da CDN do SofaScore em outro domínio (GitHub Pages, etc).
+const PHOTO_URL = (id) => `assets/photos/${id}.webp`;
 
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({
@@ -1086,7 +1085,7 @@ function newsCardHTML(it) {
     coverHtml = `
       <div class="cover">
         ${moreBadge}
-        <img src="${SOFASCORE_IMG}${p.id}/image" alt="${esc(p.name)}" loading="lazy"
+        <img src="${PHOTO_URL(p.id)}" alt="${esc(p.name)}" loading="lazy"
              onerror="this.style.display='none'">
       </div>`;
   } else {
@@ -1227,7 +1226,7 @@ function tileHTML(p) {
     <article class="player-tile ${esc(p.source)} ${isSel ? "selected" : ""}" data-id="${p.id}">
       <span class="badge">${esc(src.label_short)}</span>
       <div class="photo">
-        <img src="${SOFASCORE_IMG}${p.id}/image" alt="${esc(p.name)}" loading="lazy"
+        <img src="${PHOTO_URL(p.id)}" alt="${esc(p.name)}" loading="lazy"
              onerror="this.parentElement.classList.add('fallback'); this.outerHTML='${esc(initials(p.name))}'">
       </div>
       <p class="pos">${esc(p.position_refined)}</p>
@@ -1284,7 +1283,7 @@ function renderSelectionBar() {
     const src = sourceMeta(p.source);
     return `
       <button class="selected-chip" data-id="${p.id}">
-        <img src="${SOFASCORE_IMG}${p.id}/image" alt="${esc(p.name)}" loading="lazy">
+        <img src="${PHOTO_URL(p.id)}" alt="${esc(p.name)}" loading="lazy">
         <span class="info">
           <span class="name">${esc(p.name)}</span>
           <span class="src">${esc(src.label_short)} · ${esc(p.position_refined)}</span>
