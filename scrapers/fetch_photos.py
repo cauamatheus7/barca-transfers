@@ -30,23 +30,23 @@ ASSETS = ROOT / "assets" / "photos"
 
 
 def remove_white_bg(raw: bytes) -> bytes:
-    """Recorte com alfa gradiente + blur de borda.
+    """Recorte agressivo + halo killer + edge smoothing.
 
-    Estratégia (mais sofisticada que threshold simples):
-    1. Sample múltiplos pixels de canto/borda e usa a mediana como cor de background.
-    2. Calcula distância Euclidiana RGB de cada pixel pra cor de BG.
-    3. Alfa em rampa: 0 (transparente) se muito próximo do BG, 255 se distante,
-       gradiente suave entre. Isso preserva detalhes finos (cabelo, ombros) e
-       evita serrilhamento visível.
-    4. Aplica Gaussian blur leve no canal alpha pra suavizar a borda do recorte.
-    5. Salva como WEBP com alpha.
+    Estratégia anti-halo:
+    1. Multi-sample do BG (16 cantos+bordas) → mediana = cor de referência.
+    2. Distância Euclidiana ao BG.
+    3. Detecção de "claros" (gray-ish + bright) que tipicamente são fundo/halo.
+    4. Alpha = 0 se (próximo do BG) OR (claro+gray-ish). Senão ramp/opaco.
+    5. Edge dilation: pixels com alpha>0 cercados por muito transparente
+       também viram transparentes (kill leftover halos).
+    6. Gaussian blur 0.5px no canal alpha pra suavizar borda final.
     """
     img = Image.open(BytesIO(raw)).convert("RGBA")
     arr = np.array(img)
     h, w = arr.shape[:2]
     rgb = arr[..., :3].astype(np.int32)
 
-    # Mediana das amostras de canto e borda — robusta a corner outlier
+    # Multi-sample do background
     samples = []
     for y in (0, 1, 2, h - 1, h - 2, h - 3):
         for x in (0, 1, 2, w - 1, w - 2, w - 3):
@@ -54,16 +54,28 @@ def remove_white_bg(raw: bytes) -> bytes:
     samples += [rgb[0, w // 2], rgb[h - 1, w // 2], rgb[h // 2, 0], rgb[h // 2, w - 1]]
     bg = np.median(np.array(samples), axis=0)
 
-    # Distância Euclidiana ao BG por pixel
+    # Distância Euclidiana ao BG
     dist = np.sqrt(np.sum((rgb - bg) ** 2, axis=-1))
 
-    # Alpha em rampa: 0 até dist=30, 255 a partir de dist=70
-    alpha = np.clip((dist - 30) * (255.0 / 40.0), 0, 255).astype(np.uint8)
+    # "Light gray-ish" detector: baixa saturação RGB + alta luminosidade
+    # — tipicamente são fundo branco ou halos próximos ao BG
+    sat = rgb.max(axis=-1) - rgb.min(axis=-1)
+    bright = rgb.mean(axis=-1)
+    is_light_gray = (sat < 20) & (bright > 215)
+
+    # Alpha base: ramp pela distância (mais agressivo que antes)
+    alpha = np.clip((dist - 22) * (255.0 / 30.0), 0, 255).astype(np.uint8)
+
+    # Halo killer: pixels light-gray que ainda não estão totalmente transparentes
+    # mas estão próximos ao BG → forçar transparente
+    halo_mask = is_light_gray & (dist < 70)
+    alpha[halo_mask] = 0
+
     arr[..., 3] = alpha
 
     img2 = Image.fromarray(arr)
-    # Soften edges com Gaussian blur leve (0.6px) só no canal alpha
-    a_blur = img2.split()[3].filter(ImageFilter.GaussianBlur(0.6))
+    # Blur leve no alpha pra suavizar serrilhado residual
+    a_blur = img2.split()[3].filter(ImageFilter.GaussianBlur(0.5))
     img2.putalpha(a_blur)
 
     out = BytesIO()

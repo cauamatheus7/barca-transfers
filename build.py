@@ -240,15 +240,13 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     border-bottom: 2px solid var(--paper);
     margin-bottom: 28px;
     overflow: hidden;
-    text-align: center;
   }
   .masthead-shield {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -45%);
-    width: 280px;
-    opacity: 0.08;
+    right: -40px;
+    top: -10px;
+    width: 220px;
+    opacity: 0.07;
     pointer-events: none;
   }
   .kicker {
@@ -270,31 +268,7 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     letter-spacing: -0.025em;
     color: var(--paper);
     font-variation-settings: "opsz" 144;
-    position: relative;
-    z-index: 2;
   }
-  h1.title a {
-    color: inherit;
-    text-decoration: none;
-    display: inline-block;
-    transition: opacity 200ms ease, letter-spacing 400ms ease;
-    position: relative;
-  }
-  h1.title a:hover { opacity: 0.85; letter-spacing: -0.02em; }
-  h1.title a::after {
-    content: "↗";
-    position: absolute;
-    top: 18%;
-    right: -0.6em;
-    font-size: 0.22em;
-    font-style: normal;
-    font-weight: 500;
-    color: var(--gold);
-    opacity: 0;
-    transition: opacity 200ms ease, transform 300ms ease;
-    transform: translate(-4px, 4px);
-  }
-  h1.title a:hover::after { opacity: 0.9; transform: translate(0, 0); }
   h1.title em {
     font-style: normal;
     font-weight: 600;
@@ -314,14 +288,14 @@ HEAD_OPEN = r"""<!DOCTYPE html>
   /* ─── nav (page tabs) ─── */
   .page-nav {
     display: flex;
-    justify-content: center;
     gap: 0;
     margin: 32px 0 0;
     padding: 0;
     border-bottom: 1px solid var(--rule);
   }
   .page-nav a {
-    padding: 14px 24px;
+    padding: 14px 24px 14px 0;
+    margin-right: 28px;
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.16em;
@@ -984,7 +958,7 @@ def _masthead(active: str) -> str:
     <line x1="50" y1="12" x2="50" y2="116" stroke="#f0e8d6" stroke-width="1"/>
     <line x1="12" y1="64" x2="88" y2="64" stroke="#f0e8d6" stroke-width="1"/>
   </svg>
-  <h1 class="title"><a href="index.html" aria-label="Voltar pra home">Transfer<br><em>Desk</em>&nbsp;FCB.</a></h1>
+  <h1 class="title">Transfer<br><em>Desk</em>&nbsp;FCB.</h1>
   <nav class="page-nav">
     <a href="index.html" class="{cls_idx}">Notícias</a>
     <a href="comparador.html" class="{cls_cmp}">Comparador</a>
