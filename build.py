@@ -1095,6 +1095,14 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     border-bottom: 1px solid var(--paper);
   }
   .stats-table thead th:first-child { text-align: left; color: var(--paper); }
+  .stats-table .stat-head { color: var(--paper); font-weight: 600; margin-right: 12px; }
+  .stats-table .stat-sub {
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    color: var(--mist);
+    font-weight: 400;
+    text-transform: uppercase;
+  }
   .stats-table tbody td {
     padding: 12px 16px;
     border-bottom: 1px solid var(--rule);
@@ -1728,7 +1736,6 @@ function renderComparison() {
             ${esc(bio)}
             <span class="league-line">${esc(p.league || "—")}</span>
             ${p.market_value_label ? `<span class="pcard-value">${esc(p.market_value_label)}</span>` : ""}
-            ${p.note ? `<span class="note">${esc(p.note)}</span>` : ""}
           </div>
         </div>
       </article>`;
@@ -1760,13 +1767,12 @@ function renderComparison() {
 
   compEl.innerHTML = `
     <div id="export-target">
-      <div class="info-row">
-        <span><span class="pos-tag">${esc(groupLabel)}</span>${selected.length} jogadores · stats 25/26</span>
-        <span>▲ vencedor por 90 min · — sem dados</span>
-      </div>
       <div class="player-cards cols-${selected.length}">${cardsHtml}</div>
       <table class="stats-table">
-        <thead><tr><th>Estatística</th>${headers}</tr></thead>
+        <thead><tr>
+          <th><span class="stat-head">Estatística</span><span class="stat-sub">por 90 min · ▲ vencedor</span></th>
+          ${headers}
+        </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>
@@ -1787,38 +1793,15 @@ async function exportComparisonImage() {
   btn.disabled = true;
   btn.innerHTML = '<span class="icon">⏳</span> Gerando...';
 
-  // Cria container off-screen com branding embutido
+  // Wrap minimalista: só dossier + stats, sem cabeçalho branded
   const wrap = document.createElement("div");
   wrap.style.cssText = `
     position: fixed; left: -10000px; top: 0; width: 1080px;
-    padding: 32px 36px 28px; background: #0c0e1c;
+    padding: 24px 28px; background: #0c0e1c;
     font-family: "Manrope", system-ui, sans-serif;
     color: #d4d8e0;
   `;
-  const date = new Date().toLocaleDateString("pt-BR", {day:"2-digit", month:"long", year:"numeric"});
-  const playerNames = selectedIds.map(id => {
-    const p = playerById(id);
-    return p ? (p.shortName || p.name) : "";
-  }).filter(Boolean).join(" × ");
-  wrap.innerHTML = `
-    <div style="height:5px; background: linear-gradient(to right, #1a4faf 50%, #b3163a 50%); margin: -32px -36px 24px;"></div>
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #2a2e48;">
-      <div>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: #f5c518; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">COMPARADOR · TRANSFER DESK FCB</div>
-        <div style="font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; font-size: 28px; color: #f0e8d6; line-height: 1;">${esc(playerNames)}</div>
-      </div>
-      <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #6b7388; text-align: right; line-height: 1.6; letter-spacing: 0.06em;">
-        cauamatheus7.github.io/barca-transfers<br>
-        <span style="color: #d4d8e0">${esc(date)}</span>
-      </div>
-    </div>
-    ${target.outerHTML}
-    <div style="margin-top: 22px; padding-top: 14px; border-top: 1px solid #1f2236; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #6b7388;">
-      <span>Stats: SofaScore 25/26</span>
-      <span>Valor: Transfermarkt</span>
-      <span style="font-family: 'Allura', cursive; font-size: 22px; text-transform: none; letter-spacing: 0; color: #f0e8d6; opacity: 0.6;">cauamxt</span>
-    </div>
-  `;
+  wrap.innerHTML = target.outerHTML;
   document.body.appendChild(wrap);
 
   try {
