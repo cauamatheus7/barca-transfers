@@ -379,8 +379,9 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     margin-bottom: 14px;
     border: 1px solid var(--rule);
     background: #f4f4f4;
+    padding: 18px 18px 0;
   }
-  /* Foto contida (zoom out) — fundo branco do card combina com fundo das fotos TM */
+  /* Foto menor dentro do card pra dar zoom-out (margens respiráveis) */
   .news-card .cover img {
     width: 100%;
     height: 100%;
