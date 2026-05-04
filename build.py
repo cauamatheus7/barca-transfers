@@ -1,10 +1,14 @@
 """
-Gera index.html com picker dinâmico para comparar:
-  - jogadores especulados entre si
-  - especulados vs atuais do elenco
+Gera duas páginas HTML estáticas a partir do cache:
 
-Lê squad.json + rumors.json + stats.json e injeta tudo como <script>
-em index.html (sem precisar de servidor — abre com duplo clique).
+  - index.html       — feed de notícias estilo OneFootball (página inicial)
+  - comparador.html  — picker visual com fotos + comparação de stats
+
+Lê squad.json + rumors.json + stats.json + news.json.
+Cada página tem o mesmo masthead/ticker/footer (componentes compartilhados);
+diferem apenas no body e no script específico da página.
+
+Fotos dos jogadores vêm da CDN pública do SofaScore via tag <img>.
 """
 from __future__ import annotations
 import json
@@ -17,12 +21,7 @@ from position_config import (
 ROOT = Path(__file__).parent
 CACHE = ROOT / "cache"
 
-BARCA_BLUE   = "#004D98"
-BARCA_GRENAT = "#A50044"
-BARCA_GOLD   = "#FFED02"
-
 # L3: tabela única para metadata de cada origem do jogador.
-# Tudo (sort order, label curto, label long, time default) sai daqui — não duplicar em JS.
 SOURCES = {
     "rumor":    {"order": 0, "label_short": "Especulado",       "label_long": "ESPECULADOS",      "default_team": "Time não informado"},
     "main":     {"order": 1, "label_short": "Elenco principal", "label_long": "ELENCO PRINCIPAL", "default_team": "FC Barcelona"},
@@ -47,24 +46,18 @@ def get_age(date_of_birth) -> int | None:
 
 def refine_position(player: dict) -> str:
     """Retorna posição refinada (GK/CB/LB/RB/DM/CM/AM/LW/RW/ST) ou genérica.
-    Ordem de precedência:
-    1. REFINED_POSITIONS (override manual por nome)
-    2. position_target (do rumor)
-    3. position_detailed (do SofaScore)
-    4. fallback genérico G/D/M/F → GK/CB/CM/ST
+    Ordem: REFINED_POSITIONS > position_target (rumor) > position_detailed (SS) > fallback.
     """
     name = player["name"]
     if name in REFINED_POSITIONS:
         return REFINED_POSITIONS[name]
     if player.get("source") == "rumor" and player.get("position_target"):
         return player["position_target"]
-    # B2: usa position_detailed (lista do SofaScore) se a primeira posição é reconhecida
     detailed = player.get("position_detailed") or []
     if isinstance(detailed, str):
         detailed = [d.strip() for d in detailed.split(",") if d.strip()]
     if detailed and detailed[0] in REFINED_TO_UI_GROUP:
         return detailed[0]
-    # Fallback genérico (último recurso)
     return {"G": "GK", "D": "CB", "M": "CM", "F": "ST"}.get(player.get("position", ""), "")
 
 
@@ -81,9 +74,6 @@ def merge_data() -> list[dict]:
     rumors = json.loads((CACHE / "rumors.json").read_text(encoding="utf-8"))["players"]
     stats = json.loads((CACHE / "stats.json").read_text(encoding="utf-8"))
 
-    # B3: indexa por ID; quando colide (ex: Marcus Rashford já no squad e em rumors),
-    # mantém metadado do rumor — `note`, target_pos, e classifica como rumor pra UX.
-    # Garante current_team em squad pra não perder time real numa colisão.
     by_id: dict[int, dict] = {}
     for p in squad:
         item = dict(p)
@@ -96,7 +86,6 @@ def merge_data() -> list[dict]:
             existing["note"] = p.get("note")
             existing["position_target"] = p.get("position_target")
             existing["source"] = "rumor"
-            # mantém current_team original do squad — não sobrescreve
         else:
             by_id[p["id"]] = dict(p)
 
@@ -123,7 +112,6 @@ def merge_data() -> list[dict]:
             "position_group": ui_group,
             "league": s.get("league"),
             "stats": s.get("stats") or {},
-            # B8: atividade recente (vinda do news pipeline)
             "last_seen": p.get("last_seen"),
             "mentions_count": p.get("mentions_count", 0),
             "latest_news_url": p.get("latest_news_url"),
@@ -134,21 +122,14 @@ def merge_data() -> list[dict]:
     return merged
 
 
-def render_html(players: list[dict]) -> str:
-    # Filtra quem tem stats e position_group válido
+def _build_payload(players: list[dict]) -> dict:
     usable = [p for p in players if p["stats"] and p["position_group"]]
-    print(f"  {len(usable)}/{len(players)} jogadores utilizáveis no picker")
-
     news = load_news()
-    print(f"  {len(news)} notícias no feed")
-
-    # Mapa player_id -> nome pra mostrar tags clicáveis
     pid_to_name = {p["id"]: p["name"] for p in usable}
-
-    payload = {
+    return {
         "generated": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "groups": POSITION_GROUPS_UI,
-        "sources": SOURCES,                                          # L3: única fonte de verdade
+        "sources": SOURCES,
         "stats_by_group": {
             g: [{"key": k, "label": l, "smaller_better": sb} for k, l, sb in STATS_BY_POSITION[g]]
             for g in POSITION_GROUPS_UI
@@ -158,15 +139,17 @@ def render_html(players: list[dict]) -> str:
         "player_names": pid_to_name,
     }
 
-    return TEMPLATE.replace("__DATA__", json.dumps(payload, ensure_ascii=False))
 
+# ─────────────────────────────────────────────────────────────────
+#  SHARED HTML PARTS
+# ─────────────────────────────────────────────────────────────────
 
-TEMPLATE = r"""<!DOCTYPE html>
+HEAD_OPEN = r"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Centro de Transferências FC Barcelona — 2026</title>
+<title>__TITLE__</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Big+Shoulders+Display:wght@600;800;900&display=swap" rel="stylesheet">
@@ -176,7 +159,6 @@ TEMPLATE = r"""<!DOCTYPE html>
     --ink-rise: #141729;
     --ink-deep: #06080f;
     --paper: #f0e8d6;
-    --paper-dim: rgba(240, 232, 214, 0.08);
     --blue: #1a4faf;
     --blue-deep: #002f6c;
     --grenat: #b3163a;
@@ -187,7 +169,6 @@ TEMPLATE = r"""<!DOCTYPE html>
     --rule: #1f2236;
     --rule-bright: #2a2e48;
     --win: #6dd47a;
-
     --font-display: "Fraunces", "Times New Roman", serif;
     --font-body: "Manrope", -apple-system, system-ui, sans-serif;
     --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
@@ -204,7 +185,6 @@ TEMPLATE = r"""<!DOCTYPE html>
     font-feature-settings: "tnum", "ss01";
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* paper grain via SVG noise */
     background-image:
       radial-gradient(circle at 12% 8%, rgba(26, 79, 175, 0.08), transparent 40%),
       radial-gradient(circle at 88% 92%, rgba(179, 22, 58, 0.06), transparent 45%),
@@ -212,12 +192,11 @@ TEMPLATE = r"""<!DOCTYPE html>
     background-attachment: fixed;
   }
   ::selection { background: var(--gold); color: var(--ink); }
-  a { color: var(--silver); }
+  a { color: var(--silver); text-decoration: none; }
 
-  /* ─────────  layout shell  ───────── */
   .wrap { max-width: 1280px; margin: 0 auto; padding: 0 32px 64px; }
 
-  /* ─────────  ticker (top status bar)  ───────── */
+  /* ─── ticker top bar ─── */
   .ticker {
     border-bottom: 1px solid var(--rule);
     padding: 10px 0;
@@ -235,8 +214,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   .ticker .live::before {
     content: "";
     display: inline-block;
-    width: 7px;
-    height: 7px;
+    width: 7px; height: 7px;
     border-radius: 50%;
     background: var(--grenat);
     margin-right: 6px;
@@ -250,21 +228,13 @@ TEMPLATE = r"""<!DOCTYPE html>
   .ticker .label { color: var(--silver); }
   .ticker .sep   { color: var(--rule-bright); }
 
-  /* ─────────  masthead  ───────── */
+  /* ─── masthead ─── */
   .masthead {
     position: relative;
-    padding: 12px 0 32px;
+    padding: 12px 0 24px;
     border-bottom: 2px solid var(--paper);
-    margin-bottom: 56px;
+    margin-bottom: 28px;
     overflow: hidden;
-  }
-  .masthead::after {
-    content: "";
-    position: absolute;
-    left: 0; right: 0; bottom: -8px;
-    height: 1px;
-    background: var(--paper);
-    opacity: 0.4;
   }
   .masthead-shield {
     position: absolute;
@@ -288,7 +258,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     font-family: var(--font-display);
     font-weight: 300;
     font-style: italic;
-    font-size: clamp(42px, 7vw, 88px);
+    font-size: clamp(38px, 6vw, 76px);
     line-height: 0.95;
     letter-spacing: -0.025em;
     color: var(--paper);
@@ -300,9 +270,9 @@ TEMPLATE = r"""<!DOCTYPE html>
     color: var(--silver);
   }
   .strap {
-    margin: 22px 0 0;
+    margin: 18px 0 0;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--mist);
     letter-spacing: 0.04em;
     max-width: 60ch;
@@ -310,8 +280,34 @@ TEMPLATE = r"""<!DOCTYPE html>
   }
   .strap b { color: var(--silver); font-weight: 500; }
 
-  /* ─────────  section heading (editorial rule)  ───────── */
-  section { margin-bottom: 64px; }
+  /* ─── nav (page tabs) ─── */
+  .page-nav {
+    display: flex;
+    gap: 0;
+    margin: 32px 0 0;
+    padding: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .page-nav a {
+    padding: 14px 24px 14px 0;
+    margin-right: 28px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mist);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 200ms;
+  }
+  .page-nav a:hover { color: var(--silver); }
+  .page-nav a.active {
+    color: var(--paper);
+    border-bottom-color: var(--gold);
+  }
+
+  /* ─── section titles ─── */
+  section { margin: 48px 0 64px; }
   .section-title {
     display: flex;
     align-items: baseline;
@@ -345,67 +341,139 @@ TEMPLATE = r"""<!DOCTYPE html>
     letter-spacing: 0.1em;
   }
 
-  /* ─────────  news feed  ───────── */
-  .day-block { margin-bottom: 32px; }
+  /* ───────────────────────────────────────────
+     NEWS FEED — OneFootball-style cards
+     ─────────────────────────────────────────── */
+  .day-block { margin-bottom: 40px; }
   .day-header {
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--gold);
     text-transform: uppercase;
     letter-spacing: 0.18em;
-    margin: 0 0 14px;
+    margin: 0 0 16px;
     padding-bottom: 6px;
     border-bottom: 1px dashed var(--rule-bright);
     font-weight: 500;
   }
-  .news-item {
-    padding: 18px 0 22px;
-    border-bottom: 1px solid var(--rule);
-    transition: padding-left 200ms ease;
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px 24px;
+    margin-bottom: 8px;
   }
-  .news-item:hover { padding-left: 8px; }
-  .news-item:last-child { border-bottom: none; }
-  .news-item .row1 {
+  .news-card {
+    transition: transform 240ms ease;
+  }
+  .news-card:hover { transform: translateY(-4px); }
+  .news-card .cover {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    margin-bottom: 14px;
+    border: 1px solid var(--rule);
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 8px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--blue-deep) 0%, var(--ink) 100%);
   }
-  .news-item .journalist {
+  .news-card.rumor .cover {
+    background: linear-gradient(135deg, var(--grenat-deep) 0%, var(--ink) 100%);
+  }
+  .news-card .cover::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.95 0 0 0 0 0.95 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+    z-index: 1;
+  }
+  /* Player photo "trading card" style: photo centered, size capped */
+  .news-card .cover img {
+    position: relative;
+    z-index: 2;
+    width: auto;
+    height: 92%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+    transition: transform 600ms ease;
+    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.4));
+  }
+  .news-card:hover .cover img { transform: scale(1.05) translateY(-4px); }
+  /* Text cover (no player matched) */
+  .news-card .cover.text {
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 22px;
+  }
+  .news-card .cover.text .text-cover-source {
+    position: relative;
+    z-index: 2;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    color: var(--paper);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  .news-card .cover .badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    background: rgba(12, 14, 28, 0.85);
+    color: var(--gold);
+    padding: 4px 9px;
+    backdrop-filter: blur(4px);
+    z-index: 3;
+  }
+  .news-card.rumor .cover .badge { color: var(--grenat); }
+  .news-card .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mist);
+    margin-bottom: 10px;
+  }
+  .news-card .meta-row .journalist {
     color: var(--gold);
     font-weight: 600;
     letter-spacing: 0.14em;
   }
-  .news-item .row1 span:not(.journalist) { color: var(--mist); }
-  .news-item h4 {
-    margin: 0 0 8px;
+  .news-card h3 {
+    margin: 0 0 10px;
     font-family: var(--font-display);
-    font-weight: 400;
-    font-size: 22px;
-    line-height: 1.25;
-    letter-spacing: -0.012em;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--paper);
     font-variation-settings: "opsz" 36;
   }
-  .news-item h4 a { color: var(--paper); text-decoration: none; }
-  .news-item h4 a:hover {
-    color: var(--gold);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 4px;
-  }
-  .news-item .snippet {
-    margin: 0 0 12px;
-    color: var(--silver);
-    font-size: 14px;
+  .news-card h3 a { color: inherit; }
+  .news-card h3 a:hover { color: var(--gold); }
+  .news-card .snippet {
+    margin: 0 0 10px;
+    font-size: 13.5px;
     line-height: 1.55;
-    max-width: 75ch;
-    opacity: 0.82;
+    color: var(--silver);
+    opacity: 0.78;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  .news-item .player-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .news-card .player-tags { display: flex; gap: 6px; flex-wrap: wrap; }
   .player-tag {
     font-family: var(--font-mono);
     font-size: 10px;
@@ -413,7 +481,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     color: var(--paper);
     background: rgba(179, 22, 58, 0.18);
     border: 1px solid var(--grenat);
-    padding: 3px 9px;
+    padding: 2px 8px;
     border-radius: 999px;
     text-transform: uppercase;
     font-weight: 500;
@@ -427,14 +495,14 @@ TEMPLATE = r"""<!DOCTYPE html>
     text-transform: uppercase;
   }
   .news-toggle {
-    margin-top: 20px;
+    margin-top: 24px;
     background: transparent;
     border: 1px solid var(--rule);
     color: var(--silver);
-    padding: 9px 18px;
+    padding: 10px 22px;
     font-family: var(--font-mono);
     font-size: 11px;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     cursor: pointer;
     transition: border-color 200ms, color 200ms;
@@ -442,7 +510,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   .news-toggle:hover { border-color: var(--gold); color: var(--gold); }
   .news-empty {
     border: 1px dashed var(--rule-bright);
-    padding: 40px 24px;
+    padding: 56px 24px;
     text-align: center;
     color: var(--mist);
     font-family: var(--font-mono);
@@ -451,51 +519,208 @@ TEMPLATE = r"""<!DOCTYPE html>
     text-transform: uppercase;
   }
 
-  /* ─────────  picker (controls)  ───────── */
-  .controls {
-    display: grid;
-    grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) 2fr 2fr 2fr;
-    gap: 16px;
-    padding: 20px 24px;
-    background: var(--ink-rise);
-    border: 1px solid var(--rule);
-    border-left: 2px solid var(--gold);
-    margin-bottom: 32px;
-    align-items: end;
+  /* ───────────────────────────────────────────
+     COMPARADOR — chips, photo grid, dossiers
+     ─────────────────────────────────────────── */
+  .position-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
   }
-  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  .field label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--mist);
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    font-weight: 500;
-  }
-  select {
-    background: var(--ink-deep);
+  .position-chip {
+    background: transparent;
     border: 1px solid var(--rule);
     color: var(--silver);
-    padding: 11px 14px;
-    font-family: var(--font-body);
-    font-size: 14px;
-    min-height: 42px;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none'><path d='M1 1l5 5 5-5' stroke='%23d4d8e0' stroke-width='1.5'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 36px;
+    padding: 10px 18px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: border-color 150ms;
+    transition: all 180ms;
+    font-weight: 500;
   }
-  select:focus {
-    outline: none;
+  .position-chip:hover { border-color: var(--rule-bright); color: var(--paper); }
+  .position-chip.active {
+    background: var(--gold);
+    color: var(--ink);
     border-color: var(--gold);
   }
-  select:hover { border-color: var(--rule-bright); }
 
-  /* ─────────  comparison header  ───────── */
+  .selection-bar {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 36px;
+    padding: 18px 24px;
+    background: var(--ink-rise);
+    border-left: 2px solid var(--gold);
+    min-height: 96px;
+  }
+  .selection-bar .hint {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--mist);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .selection-bar .selected-chip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 16px 4px 4px;
+    background: rgba(245, 197, 24, 0.08);
+    border: 1px solid var(--gold);
+    cursor: pointer;
+    transition: background 150ms;
+  }
+  .selection-bar .selected-chip:hover { background: rgba(245, 197, 24, 0.16); }
+  .selection-bar .selected-chip img {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--ink-deep);
+  }
+  .selection-bar .selected-chip .info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .selection-bar .selected-chip .name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--paper);
+  }
+  .selection-bar .selected-chip .src {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: var(--mist);
+    text-transform: uppercase;
+  }
+  .selection-bar .selected-chip .x {
+    color: var(--mist);
+    font-size: 16px;
+    margin-left: 4px;
+    line-height: 1;
+  }
+
+  .player-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+  .group-divider {
+    grid-column: 1 / -1;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    padding: 14px 0 6px;
+    border-bottom: 1px dashed var(--rule);
+    margin: 8px 0 4px;
+  }
+  .player-tile {
+    position: relative;
+    padding: 22px 14px 18px;
+    background: var(--ink-rise);
+    border: 1px solid var(--rule);
+    cursor: pointer;
+    transition: all 200ms ease;
+    text-align: center;
+    overflow: hidden;
+  }
+  .player-tile:hover {
+    border-color: var(--rule-bright);
+    transform: translateY(-3px);
+  }
+  .player-tile.selected {
+    border-color: var(--gold);
+    box-shadow: inset 0 0 0 2px var(--gold), 0 8px 24px -12px rgba(245, 197, 24, 0.4);
+  }
+  .player-tile.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 22px; height: 22px;
+    background: var(--gold);
+    color: var(--ink);
+    border-radius: 50%;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+  .player-tile .badge {
+    position: absolute;
+    top: 8px; left: 8px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--mist);
+  }
+  .player-tile.rumor .badge { color: var(--grenat); }
+  .player-tile.main .badge,
+  .player-tile.athletic .badge { color: var(--blue); }
+  .player-tile .photo {
+    width: 96px;
+    height: 96px;
+    margin: 8px auto 12px;
+    border-radius: 50%;
+    background: var(--ink-deep);
+    overflow: hidden;
+    border: 2px solid var(--rule-bright);
+    transition: border-color 200ms;
+  }
+  .player-tile.rumor .photo { border-color: var(--grenat); }
+  .player-tile.main .photo,
+  .player-tile.athletic .photo { border-color: var(--blue); }
+  .player-tile.selected .photo { border-color: var(--gold); }
+  .player-tile .photo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+  .player-tile .photo.fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-style: italic;
+    font-size: 32px;
+    color: var(--mist);
+  }
+  .player-tile h4 {
+    margin: 0 0 4px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13.5px;
+    line-height: 1.25;
+    color: var(--paper);
+  }
+  .player-tile .pos {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .player-tile .team {
+    font-size: 11px;
+    color: var(--mist);
+    line-height: 1.3;
+  }
+
+  /* ─── comparison area (dossier + ledger) ─── */
   .info-row {
     display: flex;
     justify-content: space-between;
@@ -515,8 +740,6 @@ TEMPLATE = r"""<!DOCTYPE html>
     letter-spacing: 0.18em;
     margin-right: 14px;
   }
-
-  /* ─────────  player dossiers  ───────── */
   .player-cards {
     display: grid;
     gap: 0;
@@ -564,7 +787,8 @@ TEMPLATE = r"""<!DOCTYPE html>
     margin-bottom: 6px;
     font-weight: 500;
   }
-  .pcard.main .pcard-source { color: var(--blue); }
+  .pcard.main .pcard-source,
+  .pcard.athletic .pcard-source { color: var(--blue); }
   .pcard.rumor .pcard-source { color: var(--grenat); }
   .pcard h3 {
     margin: 0 0 8px;
@@ -604,7 +828,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     opacity: 0.85;
   }
 
-  /* ─────────  stats ledger  ───────── */
+  /* ─── stats ledger ─── */
   .stats-table {
     width: 100%;
     border-collapse: collapse;
@@ -636,15 +860,12 @@ TEMPLATE = r"""<!DOCTYPE html>
     font-family: var(--font-body);
     color: var(--silver);
     font-size: 13.5px;
-    text-transform: none;
-    letter-spacing: 0;
   }
   .stats-table tbody tr:last-child td { border-bottom: none; }
   .stats-table tbody tr:hover td { background: rgba(240, 232, 214, 0.02); }
   .stats-table td.win {
     color: var(--gold);
     font-weight: 600;
-    position: relative;
   }
   .stats-table td.win::before {
     content: "▲";
@@ -654,7 +875,6 @@ TEMPLATE = r"""<!DOCTYPE html>
   }
   .stats-table td.loss { color: var(--mist); }
 
-  /* ─────────  empty states  ───────── */
   .empty {
     border: 1px dashed var(--rule-bright);
     padding: 56px 24px;
@@ -665,7 +885,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     font-size: 16px;
   }
 
-  /* ─────────  footer  ───────── */
+  /* ─── footer ─── */
   footer {
     margin-top: 80px;
     padding-top: 24px;
@@ -683,34 +903,40 @@ TEMPLATE = r"""<!DOCTYPE html>
     font-size: 10px;
   }
 
-  /* ─────────  staggered page-load reveal  ───────── */
+  /* ─── reveal ─── */
   .reveal { opacity: 0; transform: translateY(8px); animation: reveal 700ms ease forwards; }
   .reveal.d1 { animation-delay: 50ms; }
   .reveal.d2 { animation-delay: 150ms; }
   .reveal.d3 { animation-delay: 280ms; }
   .reveal.d4 { animation-delay: 420ms; }
-  @keyframes reveal {
-    to { opacity: 1; transform: translateY(0); }
-  }
+  @keyframes reveal { to { opacity: 1; transform: translateY(0); } }
 
-  /* ─────────  responsive  ───────── */
-  @media (max-width: 900px) {
-    .controls { grid-template-columns: 1fr 1fr; }
-    .player-cards.cols-2, .player-cards.cols-3 {
-      grid-template-columns: 1fr;
-      border-right: none;
-    }
+  /* ─── responsive ─── */
+  @media (max-width: 1100px) {
+    .news-grid { grid-template-columns: repeat(2, 1fr); }
+    .news-grid .news-card.hero { grid-template-columns: 1fr; }
+    .news-grid .news-card.hero .cover { aspect-ratio: 16/10; min-height: 0; }
+  }
+  @media (max-width: 720px) {
+    .news-grid { grid-template-columns: 1fr; }
+    .player-cards.cols-2, .player-cards.cols-3 { grid-template-columns: 1fr; border-right: none; }
     .pcard { border-right: none; border-bottom: 1px solid var(--rule); }
     .pcard:last-child { border-bottom: none; }
   }
   @media (max-width: 560px) {
     .wrap { padding: 0 18px 48px; }
-    .controls { grid-template-columns: 1fr; }
-    h1.title { font-size: 44px; }
+    h1.title { font-size: 40px; }
   }
 </style>
 </head>
-<body>
+"""
+
+
+def _masthead(active: str) -> str:
+    """Returns the masthead + nav HTML. `active` is either 'index' or 'comparador'."""
+    cls_idx = "active" if active == "index" else ""
+    cls_cmp = "active" if active == "comparador" else ""
+    return f"""<body>
 <div class="wrap">
 
 <div class="ticker reveal d1" id="ticker-bar">
@@ -735,152 +961,35 @@ TEMPLATE = r"""<!DOCTYPE html>
   <p class="kicker">Mercado · Janela 2026 · Edição diária</p>
   <h1 class="title">Transfer<br><em>Desk</em>&nbsp;FCB.</h1>
   <p class="strap">
-    Centro de monitoramento de rumores e comparação de jogadores especulados contra o elenco do <b>FC&nbsp;Barcelona</b>. Atualizado três vezes ao dia a partir de fontes selecionadas <b>(Romano · Romero · Moretto · Rahman · Juanmartí · Piera · Soldevila)</b>. Estatísticas de desempenho via <b>SofaScore</b>, temporada 25/26.
+    Centro de monitoramento de rumores e comparação de jogadores especulados contra o elenco do <b>FC&nbsp;Barcelona</b>. Atualizado três vezes ao dia a partir de fontes selecionadas <b>(Romano · Romero · Moretto · Rahman · Juanmartí · Piera · Soldevila)</b>. Estatísticas via <b>SofaScore</b>, temporada 25/26.
   </p>
+  <nav class="page-nav">
+    <a href="index.html" class="{cls_idx}">Notícias</a>
+    <a href="comparador.html" class="{cls_cmp}">Comparador</a>
+  </nav>
 </header>
+"""
 
-<section class="news-section reveal d3">
-  <div class="section-title">
-    <span class="num">§ 01</span>
-    <h2>Feed de notícias</h2>
-    <span class="meta" id="news-meta"></span>
-  </div>
-  <div id="news-feed"></div>
-  <button class="news-toggle" id="news-toggle" style="display:none">Mostrar mais ↓</button>
-</section>
 
-<section class="reveal d4">
-  <div class="section-title">
-    <span class="num">§ 02</span>
-    <h2>Comparador</h2>
-    <span class="meta">Especulados × Elenco atual</span>
-  </div>
-  <div class="controls">
-    <div class="field">
-      <label for="position-select">Posição</label>
-      <select id="position-select">
-        <option value="">— selecione —</option>
-      </select>
-    </div>
-    <div class="field">
-      <label for="num-players">Comparar</label>
-      <select id="num-players">
-        <option value="2">2 jogadores</option>
-        <option value="3">3 jogadores</option>
-      </select>
-    </div>
-    <div class="field" id="player1-field" style="display:none">
-      <label for="player1-select">Jogador A</label>
-      <select id="player1-select"></select>
-    </div>
-    <div class="field" id="player2-field" style="display:none">
-      <label for="player2-select">Jogador B</label>
-      <select id="player2-select"></select>
-    </div>
-    <div class="field" id="player3-field" style="display:none">
-      <label for="player3-select">Jogador C</label>
-      <select id="player3-select"></select>
-    </div>
-  </div>
-
-  <div id="comparison-area">
-    <div class="empty">Escolha uma posição e os jogadores para comparar.</div>
-  </div>
-</section>
-
+FOOTER_HTML = r"""
 <footer>
   <p>Dados via <code>cache/stats.json</code> · SofaScore 25/26 · regerado por <code>build.py</code> a cada execução da rotina <code>/schedule</code>.</p>
   <p>Cores: <span style="color:#1a4faf">azul Barça</span> · <span style="color:#b3163a">grená</span> · <span style="color:#f5c518">ouro catalão</span> · sobre tinta marinha.</p>
 </footer>
 
 </div>
+"""
 
-<script>
+
+SHARED_SCRIPT = r"""
 window.DATA = __DATA__;
+const SOFASCORE_IMG = "https://api.sofascore.com/api/v1/player/";
 
-const positionSelect = document.getElementById("position-select");
-const numPlayers = document.getElementById("num-players");
-const fields = [1, 2, 3].map(i => ({
-  field: document.getElementById(`player${i}-field`),
-  select: document.getElementById(`player${i}-select`),
-}));
-const compArea = document.getElementById("comparison-area");
-
-// Popular dropdown de posições
-Object.entries(window.DATA.groups).forEach(([key, label]) => {
-  const opt = document.createElement("option");
-  opt.value = key;
-  opt.textContent = label;
-  positionSelect.appendChild(opt);
-});
-
-function sourceMeta(s) {
-  return window.DATA.sources[s] || { order: 9, label_short: s || "outros", label_long: (s || "OUTROS").toUpperCase(), default_team: "?" };
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
 }
-
-function playersFor(group) {
-  return window.DATA.players
-    .filter(p => p.position_group === group)
-    .sort((a, b) => {
-      const ao = sourceMeta(a.source).order;
-      const bo = sourceMeta(b.source).order;
-      if (ao !== bo) return ao - bo;
-      return a.name.localeCompare(b.name);
-    });
-}
-
-function populatePlayerSelect(select, group, excludeIds = []) {
-  const players = playersFor(group).filter(p => !excludeIds.includes(p.id));
-  select.innerHTML = '<option value="">— selecione —</option>';
-  let lastSource = null;
-  players.forEach(p => {
-    if (p.source !== lastSource) {
-      const opt = document.createElement("option");
-      opt.disabled = true;
-      opt.textContent = `── ${sourceMeta(p.source).label_long} ──`;
-      select.appendChild(opt);
-      lastSource = p.source;
-    }
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    const note = p.source === "rumor" ? ` · ${p.team}` : "";
-    opt.textContent = `${p.name}${note}`;
-    select.appendChild(opt);
-  });
-}
-
-function showFields() {
-  const n = parseInt(numPlayers.value);
-  fields.forEach((f, i) => {
-    f.field.style.display = (i < n) ? "" : "none";
-  });
-}
-
-function refreshDropdowns() {
-  const group = positionSelect.value;
-  if (!group) {
-    fields.forEach(f => f.field.style.display = "none");
-    compArea.innerHTML = '<div class="empty">Escolha uma posição e os jogadores para comparar.</div>';
-    return;
-  }
-  showFields();
-  const n = parseInt(numPlayers.value);
-  for (let i = 0; i < n; i++) {
-    const others = fields.slice(0, n)
-      .filter((_, j) => j !== i)
-      .map(f => parseInt(f.select.value))
-      .filter(v => !isNaN(v));
-    const prev = fields[i].select.value;
-    populatePlayerSelect(fields[i].select, group, others);
-    if (prev) fields[i].select.value = prev;
-  }
-  render();
-}
-
-function getPlayerById(id) {
-  return window.DATA.players.find(p => p.id === parseInt(id));
-}
-
 function fmt(v) {
   if (v == null) return "—";
   if (typeof v === "number") {
@@ -889,137 +998,121 @@ function fmt(v) {
   }
   return v.toString();
 }
-
-function render() {
-  const group = positionSelect.value;
-  if (!group) return;
-  const n = parseInt(numPlayers.value);
-  const selected = fields.slice(0, n)
-    .map(f => f.select.value)
-    .filter(v => v)
-    .map(getPlayerById)
-    .filter(p => p);
-
-  if (selected.length < 2) {
-    compArea.innerHTML = '<div class="empty">Selecione pelo menos 2 jogadores.</div>';
-    return;
-  }
-
-  const stats = window.DATA.stats_by_group[group];
-
-  // Player dossier cards
-  const cardsHtml = selected.map(p => {
-    const sourceLabel = sourceMeta(p.source).label_short;
-    const sourceClass = p.source || "main";
-    const jerseyDisplay = p.jersey != null ? p.jersey : "—";
-    const bioBits = [
-      p.age ? `${p.age} anos` : null,
-      p.height ? `${p.height} cm` : null,
-      p.preferredFoot ? `pé ${esc(p.preferredFoot.toLowerCase())}` : null,
-    ].filter(Boolean).join(" · ");
-    return `
-      <article class="pcard ${esc(sourceClass)}">
-        <span class="jersey">${esc(jerseyDisplay)}</span>
-        <p class="pcard-source">${esc(sourceLabel)} · ${esc(p.position_refined)}</p>
-        <h3>${esc(p.name)}</h3>
-        <div class="meta">
-          ${esc(p.team)}${p.country ? ` · ${esc(p.country)}` : ""}<br>
-          ${esc(bioBits)}
-          <span class="league-line">${esc(p.league || "—")}</span>
-          ${p.note ? `<span class="note">${esc(p.note)}</span>` : ""}
-        </div>
-      </article>`;
-  }).join("");
-
-  // Stats table — marca o melhor entre os selecionados
-  // B4: só destaca quando há diferença real (min !== max).
-  let rowsHtml = "";
-  for (const stat of stats) {
-    const values = selected.map(p => {
-      const v = p.stats[stat.key];
-      return typeof v === "number" ? v : null;
-    });
-    const valid = values.filter(v => v !== null);
-    let best = null;
-    let allEqual = true;
-    if (valid.length > 0) {
-      const min = Math.min(...valid);
-      const max = Math.max(...valid);
-      best = stat.smaller_better ? min : max;
-      allEqual = Math.abs(max - min) < 1e-9;
-    }
-    const cells = values.map(v => {
-      if (v === null) return `<td class="loss">—</td>`;
-      const isBest = (!allEqual && best !== null && Math.abs(v - best) < 1e-9);
-      return `<td class="${isBest ? 'win' : ''}">${fmt(v)}</td>`;
-    }).join("");
-    rowsHtml += `<tr><td>${stat.label}</td>${cells}</tr>`;
-  }
-
-  const headers = selected.map(p => `<th>${esc(p.shortName || p.name)}</th>`).join("");
-  const groupLabel = window.DATA.groups[group];
-
-  compArea.innerHTML = `
-    <div class="info-row">
-      <span><span class="pos-tag">${esc(groupLabel)}</span>${selected.length} jogadores · stats 25/26</span>
-      <span>▲ vencedor por 90 min · — sem dados</span>
-    </div>
-    <div class="player-cards cols-${selected.length}">${cardsHtml}</div>
-    <table class="stats-table">
-      <thead><tr><th>Estatística</th>${headers}</tr></thead>
-      <tbody>${rowsHtml}</tbody>
-    </table>
-  `;
+function sourceMeta(s) {
+  return window.DATA.sources[s] || { order: 9, label_short: s || "outros", label_long: (s || "OUTROS").toUpperCase(), default_team: "?" };
 }
-
-positionSelect.addEventListener("change", refreshDropdowns);
-numPlayers.addEventListener("change", refreshDropdowns);
-fields.forEach(f => f.select.addEventListener("change", refreshDropdowns));
-
-// ====== NEWS FEED ======
-const NEWS_PAGE_SIZE = 8;
-let newsExpanded = false;
-
-// R1: HTML-escape para conteúdo de fontes externas (title/snippet do WebSearch)
-function esc(s) {
-  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}
-
-// R3: força ISO sem timezone a ser interpretado como UTC (evita drift local-vs-UTC)
 function toDate(iso) {
   if (!iso) return null;
   const hasTZ = /Z$|[+-]\d{2}:?\d{2}$/.test(iso);
   return new Date(hasTZ ? iso : iso + "Z");
 }
-
 function dayKey(iso) {
   const dt = toDate(iso);
   if (!dt || isNaN(dt)) return "";
-  // Usa data LOCAL (não UTC) — assim "Hoje" reflete o dia do usuário
   const y = dt.getFullYear();
   const m = String(dt.getMonth() + 1).padStart(2, "0");
   const d = String(dt.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
-
 function dayLabel(key) {
   if (!key) return "Sem data";
   const today = new Date();
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+  const tk = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
   const yd = new Date(today.getTime() - 86400000);
-  const yest = `${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,"0")}-${String(yd.getDate()).padStart(2,"0")}`;
-  if (key === todayKey) return "Hoje";
-  if (key === yest) return "Ontem";
+  const yk = `${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,"0")}-${String(yd.getDate()).padStart(2,"0")}`;
+  if (key === tk) return "Hoje";
+  if (key === yk) return "Ontem";
   const [y, m, d] = key.split("-");
   return `${d}/${m}/${y}`;
 }
-
 function fmtTime(iso) {
   const dt = toDate(iso);
   if (!dt || isNaN(dt)) return "";
   return dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+function playerById(id) {
+  return window.DATA.players.find(p => p.id === id);
+}
+function initials(name) {
+  return (name || "?").split(/\s+/).filter(Boolean).slice(0, 2)
+    .map(w => w[0]).join("").toUpperCase();
+}
+
+// Ticker date
+(() => {
+  const el = document.getElementById("ticker-date");
+  if (!el) return;
+  const now = new Date();
+  const wd = now.toLocaleDateString("pt-BR", { weekday: "long" }).toUpperCase();
+  const dt = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).toUpperCase();
+  el.innerHTML = `<span class="label">${esc(wd)}</span> <span class="sep">/</span> ${esc(dt)}`;
+})();
+"""
+
+
+# ─────────────────────────────────────────────────────────────────
+#  INDEX (news feed) — body + script
+# ─────────────────────────────────────────────────────────────────
+
+INDEX_BODY = r"""
+<section class="reveal d3">
+  <div class="section-title">
+    <span class="num">§ 01</span>
+    <h2>Feed de notícias</h2>
+    <span class="meta" id="news-meta"></span>
+  </div>
+  <div id="news-feed"></div>
+  <button class="news-toggle" id="news-toggle" style="display:none">Mostrar mais ↓</button>
+</section>
+"""
+
+
+INDEX_SCRIPT = r"""
+const NEWS_PAGE_SIZE = 9;
+let newsExpanded = false;
+
+function newsCardHTML(it) {
+  const time = fmtTime(it.published_at || it.last_seen);
+  const tagsHtml = (it.players_mentioned || [])
+    .map(pid => window.DATA.player_names[pid])
+    .filter(n => n)
+    .map(n => `<span class="player-tag">${esc(n)}</span>`).join("");
+  const mentioned = (it.players_mentioned || []).map(pid => playerById(pid)).filter(Boolean);
+  const isRumor = mentioned.some(p => p.source === "rumor");
+  const cardCls = `news-card ${isRumor ? "rumor" : ""}`;
+
+  // Cover: foto do jogador (se mencionado) ou text cover editorial
+  let coverHtml;
+  if (mentioned.length >= 1) {
+    const p = mentioned[0];
+    const moreBadge = mentioned.length > 1
+      ? `<span class="badge">+${mentioned.length - 1}</span>`
+      : `<span class="badge">${esc((it.journalist || "?").toUpperCase())}</span>`;
+    coverHtml = `
+      <div class="cover">
+        ${moreBadge}
+        <img src="${SOFASCORE_IMG}${p.id}/image" alt="${esc(p.name)}" loading="lazy"
+             onerror="this.style.display='none'">
+      </div>`;
+  } else {
+    coverHtml = `
+      <div class="cover text">
+        <span class="badge">${esc((it.journalist || "?").toUpperCase())}</span>
+        <span class="text-cover-source">${esc(it.title.slice(0, 70))}${it.title.length > 70 ? "…" : ""}</span>
+      </div>`;
+  }
+
+  return `
+    <article class="${cardCls}">
+      ${coverHtml}
+      <div class="meta-row">
+        <span class="journalist">${esc(it.journalist || "?")}</span>
+        <span>${esc(time)}</span>
+      </div>
+      <h3><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a></h3>
+      <p class="snippet">${esc(it.snippet || "")}</p>
+      ${tagsHtml ? `<div class="player-tags">${tagsHtml}</div>` : ""}
+    </article>`;
 }
 
 function renderNews() {
@@ -1029,46 +1122,31 @@ function renderNews() {
   const items = window.DATA.news || [];
 
   if (items.length === 0) {
-    container.innerHTML = '<div class="news-empty">Sem notícias capturadas ainda. A rotina rodará 3x por dia.</div>';
+    container.innerHTML = '<div class="news-empty">Sem notícias capturadas ainda · A rotina rodará em breve</div>';
     meta.textContent = "";
+    toggleBtn.style.display = "none";
     return;
   }
 
-  meta.textContent = `${items.length} notícias indexadas · atualizado ${esc(window.DATA.generated)}`;
+  meta.textContent = `${items.length} notícias · atualizado ${esc(window.DATA.generated)}`;
 
   const visible = newsExpanded ? items : items.slice(0, NEWS_PAGE_SIZE);
-  // Agrupa por dia
   const byDay = {};
   for (const it of visible) {
     const k = dayKey(it.published_at || it.last_seen);
     (byDay[k] = byDay[k] || []).push(it);
   }
-  // R2: separa dias com data (ordenados desc) e dia sem data (vai pro fim)
   const datedKeys = Object.keys(byDay).filter(k => k).sort().reverse();
   const noDate = byDay[""] ? [""] : [];
   const dayKeys = [...datedKeys, ...noDate];
 
   let html = "";
   for (const k of dayKeys) {
-    html += `<div class="day-block"><h3 class="day-header">${esc(dayLabel(k))}</h3>`;
+    html += `<div class="day-block"><h3 class="day-header">${esc(dayLabel(k))}</h3><div class="news-grid">`;
     for (const it of byDay[k]) {
-      const time = fmtTime(it.published_at || it.last_seen);
-      const tags = (it.players_mentioned || [])
-        .map(pid => window.DATA.player_names[pid])
-        .filter(n => n)
-        .map(n => `<span class="player-tag">${esc(n)}</span>`).join("");
-      html += `
-        <article class="news-item">
-          <div class="row1">
-            <span class="journalist">${esc(it.journalist || "?")}</span>
-            <span>${esc(time)}</span>
-          </div>
-          <h4><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a></h4>
-          <p class="snippet">${esc(it.snippet || "")}</p>
-          ${tags ? `<div class="player-tags">${tags}</div>` : ""}
-        </article>`;
+      html += newsCardHTML(it);
     }
-    html += `</div>`;
+    html += `</div></div>`;
   }
   container.innerHTML = html;
 
@@ -1088,32 +1166,277 @@ document.getElementById("news-toggle").addEventListener("click", () => {
 });
 
 renderNews();
+"""
 
-// Ticker date
-(() => {
-  const el = document.getElementById("ticker-date");
-  if (!el) return;
-  const now = new Date();
-  const wd = now.toLocaleDateString("pt-BR", { weekday: "long" }).toUpperCase();
-  const dt = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).toUpperCase();
-  el.innerHTML = `<span class="label">${wd}</span> <span class="sep">/</span> ${dt}`;
-})();
-</script>
-</body>
-</html>"""
+
+# ─────────────────────────────────────────────────────────────────
+#  COMPARADOR — body + script
+# ─────────────────────────────────────────────────────────────────
+
+COMPARADOR_BODY = r"""
+<section class="reveal d3">
+  <div class="section-title">
+    <span class="num">§ 02</span>
+    <h2>Comparador</h2>
+    <span class="meta" id="selection-count">0 / 3 selecionados</span>
+  </div>
+
+  <div class="position-chips" id="position-chips"></div>
+  <div class="selection-bar" id="selection-bar"></div>
+  <div class="player-grid" id="player-grid"></div>
+  <div id="comparison-area"></div>
+</section>
+"""
+
+
+COMPARADOR_SCRIPT = r"""
+// State
+let activeGroup = null;
+let selectedIds = [];
+const MAX_SELECTED = 3;
+
+const chipsEl = document.getElementById("position-chips");
+const selBar  = document.getElementById("selection-bar");
+const gridEl  = document.getElementById("player-grid");
+const compEl  = document.getElementById("comparison-area");
+const countEl = document.getElementById("selection-count");
+
+function renderChips() {
+  const groups = window.DATA.groups;
+  chipsEl.innerHTML = Object.entries(groups).map(([key, label]) =>
+    `<button class="position-chip ${activeGroup === key ? "active" : ""}" data-group="${esc(key)}">${esc(label)}</button>`
+  ).join("");
+  chipsEl.querySelectorAll(".position-chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeGroup = btn.dataset.group;
+      selectedIds = [];
+      renderAll();
+    });
+  });
+}
+
+function playersInGroup(group) {
+  return window.DATA.players
+    .filter(p => p.position_group === group)
+    .sort((a, b) => {
+      const ao = sourceMeta(a.source).order;
+      const bo = sourceMeta(b.source).order;
+      if (ao !== bo) return ao - bo;
+      return a.name.localeCompare(b.name);
+    });
+}
+
+function tileHTML(p) {
+  const isSel = selectedIds.includes(p.id);
+  const src = sourceMeta(p.source);
+  return `
+    <article class="player-tile ${esc(p.source)} ${isSel ? "selected" : ""}" data-id="${p.id}">
+      <span class="badge">${esc(src.label_short)}</span>
+      <div class="photo">
+        <img src="${SOFASCORE_IMG}${p.id}/image" alt="${esc(p.name)}" loading="lazy"
+             onerror="this.parentElement.classList.add('fallback'); this.outerHTML='${esc(initials(p.name))}'">
+      </div>
+      <p class="pos">${esc(p.position_refined)}</p>
+      <h4>${esc(p.name)}</h4>
+      <p class="team">${esc(p.team)}</p>
+    </article>`;
+}
+
+function renderGrid() {
+  if (!activeGroup) {
+    gridEl.innerHTML = `<div class="empty" style="grid-column:1/-1">Escolha uma posição acima para ver os jogadores disponíveis.</div>`;
+    return;
+  }
+  const players = playersInGroup(activeGroup);
+  if (players.length === 0) {
+    gridEl.innerHTML = `<div class="empty" style="grid-column:1/-1">Nenhum jogador com stats nessa posição.</div>`;
+    return;
+  }
+  // Group by source with dividers
+  let html = "";
+  let lastSource = null;
+  for (const p of players) {
+    if (p.source !== lastSource) {
+      html += `<div class="group-divider">── ${esc(sourceMeta(p.source).label_long)} ──</div>`;
+      lastSource = p.source;
+    }
+    html += tileHTML(p);
+  }
+  gridEl.innerHTML = html;
+
+  gridEl.querySelectorAll(".player-tile").forEach(tile => {
+    tile.addEventListener("click", () => {
+      const id = parseInt(tile.dataset.id);
+      const idx = selectedIds.indexOf(id);
+      if (idx >= 0) {
+        selectedIds.splice(idx, 1);
+      } else if (selectedIds.length < MAX_SELECTED) {
+        selectedIds.push(id);
+      }
+      renderAll();
+    });
+  });
+}
+
+function renderSelectionBar() {
+  countEl.textContent = `${selectedIds.length} / ${MAX_SELECTED} selecionados`;
+  if (selectedIds.length === 0) {
+    selBar.innerHTML = `<span class="hint">Selecione 2 ou 3 jogadores na grade abaixo · Clique novamente para remover</span>`;
+    return;
+  }
+  const chips = selectedIds.map(id => {
+    const p = playerById(id);
+    if (!p) return "";
+    const src = sourceMeta(p.source);
+    return `
+      <button class="selected-chip" data-id="${p.id}">
+        <img src="${SOFASCORE_IMG}${p.id}/image" alt="${esc(p.name)}" loading="lazy">
+        <span class="info">
+          <span class="name">${esc(p.name)}</span>
+          <span class="src">${esc(src.label_short)} · ${esc(p.position_refined)}</span>
+        </span>
+        <span class="x">×</span>
+      </button>`;
+  }).join("");
+  const remaining = MAX_SELECTED - selectedIds.length;
+  const hint = selectedIds.length < 2
+    ? `<span class="hint">Selecione mais ${2 - selectedIds.length} jogador${2 - selectedIds.length > 1 ? "es" : ""} para comparar</span>`
+    : (remaining > 0 ? `<span class="hint">Pode adicionar mais ${remaining}</span>` : "");
+  selBar.innerHTML = chips + hint;
+
+  selBar.querySelectorAll(".selected-chip").forEach(b => {
+    b.addEventListener("click", () => {
+      const id = parseInt(b.dataset.id);
+      selectedIds = selectedIds.filter(x => x !== id);
+      renderAll();
+    });
+  });
+}
+
+function renderComparison() {
+  const selected = selectedIds.map(playerById).filter(Boolean);
+  if (selected.length < 2 || !activeGroup) {
+    compEl.innerHTML = "";
+    return;
+  }
+  const stats = window.DATA.stats_by_group[activeGroup];
+
+  const cardsHtml = selected.map(p => {
+    const src = sourceMeta(p.source);
+    const jersey = p.jersey != null ? p.jersey : "—";
+    const bio = [
+      p.age ? `${p.age} anos` : null,
+      p.height ? `${p.height} cm` : null,
+      p.preferredFoot ? `pé ${p.preferredFoot.toLowerCase()}` : null,
+    ].filter(Boolean).join(" · ");
+    return `
+      <article class="pcard ${esc(p.source)}">
+        <span class="jersey">${esc(jersey)}</span>
+        <p class="pcard-source">${esc(src.label_short)} · ${esc(p.position_refined)}</p>
+        <h3>${esc(p.name)}</h3>
+        <div class="meta">
+          ${esc(p.team)}${p.country ? ` · ${esc(p.country)}` : ""}<br>
+          ${esc(bio)}
+          <span class="league-line">${esc(p.league || "—")}</span>
+          ${p.note ? `<span class="note">${esc(p.note)}</span>` : ""}
+        </div>
+      </article>`;
+  }).join("");
+
+  let rowsHtml = "";
+  for (const stat of stats) {
+    const values = selected.map(p => {
+      const v = p.stats[stat.key];
+      return typeof v === "number" ? v : null;
+    });
+    const valid = values.filter(v => v !== null);
+    let best = null, allEqual = true;
+    if (valid.length > 0) {
+      const min = Math.min(...valid), max = Math.max(...valid);
+      best = stat.smaller_better ? min : max;
+      allEqual = Math.abs(max - min) < 1e-9;
+    }
+    const cells = values.map(v => {
+      if (v === null) return `<td class="loss">—</td>`;
+      const isBest = (!allEqual && best !== null && Math.abs(v - best) < 1e-9);
+      return `<td class="${isBest ? "win" : ""}">${fmt(v)}</td>`;
+    }).join("");
+    rowsHtml += `<tr><td>${esc(stat.label)}</td>${cells}</tr>`;
+  }
+
+  const headers = selected.map(p => `<th>${esc(p.shortName || p.name)}</th>`).join("");
+  const groupLabel = window.DATA.groups[activeGroup];
+
+  compEl.innerHTML = `
+    <div class="info-row">
+      <span><span class="pos-tag">${esc(groupLabel)}</span>${selected.length} jogadores · stats 25/26</span>
+      <span>▲ vencedor por 90 min · — sem dados</span>
+    </div>
+    <div class="player-cards cols-${selected.length}">${cardsHtml}</div>
+    <table class="stats-table">
+      <thead><tr><th>Estatística</th>${headers}</tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  `;
+}
+
+function renderAll() {
+  renderChips();
+  renderSelectionBar();
+  renderGrid();
+  renderComparison();
+}
+
+renderAll();
+"""
+
+
+# ─────────────────────────────────────────────────────────────────
+#  ASSEMBLE & RENDER
+# ─────────────────────────────────────────────────────────────────
+
+def _assemble(active_page: str, title: str, body: str, page_script: str, payload: dict) -> str:
+    head = HEAD_OPEN.replace("__TITLE__", title)
+    masthead = _masthead(active_page)
+    full_script = SHARED_SCRIPT + page_script
+    full_script = full_script.replace("__DATA__", json.dumps(payload, ensure_ascii=False))
+    return head + masthead + body + FOOTER_HTML + "<script>" + full_script + "</script></body></html>"
+
+
+def render_index(payload: dict) -> str:
+    return _assemble(
+        "index",
+        "Feed · Transfer Desk FCB",
+        INDEX_BODY,
+        INDEX_SCRIPT,
+        payload,
+    )
+
+
+def render_comparador(payload: dict) -> str:
+    return _assemble(
+        "comparador",
+        "Comparador · Transfer Desk FCB",
+        COMPARADOR_BODY,
+        COMPARADOR_SCRIPT,
+        payload,
+    )
 
 
 def main():
     players = merge_data()
     print(f"merge_data: {len(players)} jogadores")
-    html = render_html(players)
-    out = ROOT / "index.html"
-    out.write_text(html, encoding="utf-8")
-    print(f"\nOK -> {out}")
-    # Resumo por grupo
+    payload = _build_payload(players)
+    print(f"  {len(payload['players'])}/{len(players)} utilizáveis no picker")
+    print(f"  {len(payload['news'])} notícias no feed")
+
+    (ROOT / "index.html").write_text(render_index(payload), encoding="utf-8")
+    (ROOT / "comparador.html").write_text(render_comparador(payload), encoding="utf-8")
+    print(f"\nOK -> index.html + comparador.html")
+
     from collections import Counter
-    groups = Counter(p["position_group"] for p in players if p["position_group"] and p["stats"])
-    print(f"  jogadores utilizáveis por grupo: {dict(groups)}")
+    groups = Counter(p["position_group"] for p in payload["players"])
+    print(f"  por grupo: {dict(groups)}")
 
 
 if __name__ == "__main__":
