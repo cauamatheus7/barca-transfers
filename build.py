@@ -946,9 +946,10 @@ HEAD_OPEN = r"""<!DOCTYPE html>
   .player-cards.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
   .pcard {
     position: relative;
-    padding: 28px 24px;
     border-right: 1px solid var(--rule);
     overflow: hidden;
+    display: flex;
+    gap: 0;
   }
   .pcard:last-child { border-right: none; }
   .pcard::before {
@@ -957,15 +958,48 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     top: 0; left: 0;
     width: 3px; height: 56px;
     background: var(--blue);
+    z-index: 3;
   }
   .pcard.rumor::before { background: var(--grenat); }
+  .pcard-photo {
+    flex: 0 0 28%;
+    min-width: 100px;
+    max-width: 140px;
+    position: relative;
+    overflow: hidden;
+    background: var(--ink-deep);
+    align-self: stretch;
+  }
+  .pcard-photo .bg-blur {
+    position: absolute;
+    inset: -8%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(22px) saturate(1.3) brightness(0.5);
+    z-index: 1;
+  }
+  .pcard-photo img {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 12%;
+  }
+  .pcard-info {
+    flex: 1;
+    padding: 24px 22px;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+  }
   .pcard .jersey {
     position: absolute;
-    right: 18px;
-    top: 14px;
+    right: 14px;
+    top: 8px;
     font-family: var(--font-numeric);
     font-weight: 800;
-    font-size: 84px;
+    font-size: 78px;
     line-height: 0.85;
     color: var(--paper);
     opacity: 0.07;
@@ -1179,6 +1213,7 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     .player-cards.cols-2, .player-cards.cols-3 { grid-template-columns: 1fr; border-right: none; }
     .pcard { border-right: none; border-bottom: 1px solid var(--rule); }
     .pcard:last-child { border-bottom: none; }
+    .pcard-photo { flex: 0 0 100px; max-width: 110px; }
   }
   @media (max-width: 560px) {
     .wrap { padding: 0 18px 48px; }
@@ -1677,17 +1712,24 @@ function renderComparison() {
       p.height ? `${p.height} cm` : null,
       p.preferredFoot ? `pé ${p.preferredFoot.toLowerCase()}` : null,
     ].filter(Boolean).join(" · ");
+    const photoSrc = PHOTO_URL(p.id);
     return `
       <article class="pcard ${esc(p.source)}">
-        <span class="jersey">${esc(jersey)}</span>
-        <p class="pcard-source">${esc(src.label_short)} · ${esc(p.position_refined)}</p>
-        <h3>${esc(p.name)}</h3>
-        <div class="meta">
-          ${esc(p.team)}${p.country ? ` · ${esc(p.country)}` : ""}<br>
-          ${esc(bio)}
-          <span class="league-line">${esc(p.league || "—")}</span>
-          ${p.market_value_label ? `<span class="pcard-value">${esc(p.market_value_label)}</span>` : ""}
-          ${p.note ? `<span class="note">${esc(p.note)}</span>` : ""}
+        <div class="pcard-photo">
+          <div class="bg-blur" style="background-image: url('${photoSrc}')"></div>
+          <img src="${photoSrc}" alt="${esc(p.name)}" loading="lazy" onerror="this.style.display='none'">
+        </div>
+        <div class="pcard-info">
+          <span class="jersey">${esc(jersey)}</span>
+          <p class="pcard-source">${esc(src.label_short)} · ${esc(p.position_refined)}</p>
+          <h3>${esc(p.name)}</h3>
+          <div class="meta">
+            ${esc(p.team)}${p.country ? ` · ${esc(p.country)}` : ""}<br>
+            ${esc(bio)}
+            <span class="league-line">${esc(p.league || "—")}</span>
+            ${p.market_value_label ? `<span class="pcard-value">${esc(p.market_value_label)}</span>` : ""}
+            ${p.note ? `<span class="note">${esc(p.note)}</span>` : ""}
+          </div>
         </div>
       </article>`;
   }).join("");
