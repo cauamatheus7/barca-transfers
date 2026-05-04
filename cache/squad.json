@@ -1,0 +1,957 @@
+{
+  "team": "FC Barcelona",
+  "players": [
+    {
+      "id": 41789,
+      "name": "Robert Lewandowski",
+      "shortName": "R. Lewandowski",
+      "slug": "robert-lewandowski",
+      "position": "F",
+      "position_detailed": [
+        "ST"
+      ],
+      "jersey": "9",
+      "dateOfBirth": "1988-08-21T00:00:00+00:00",
+      "country": "Poland",
+      "preferredFoot": "Right",
+      "height": 186,
+      "source": "main"
+    },
+    {
+      "id": 814590,
+      "name": "Marcus Rashford",
+      "shortName": "M. Rashford",
+      "slug": "marcus-rashford",
+      "position": "F",
+      "position_detailed": [
+        "LW"
+      ],
+      "jersey": "14",
+      "dateOfBirth": "1997-10-31T00:00:00+00:00",
+      "country": "England",
+      "preferredFoot": "Right",
+      "height": 185,
+      "source": "main"
+    },
+    {
+      "id": 855833,
+      "name": "Ferran Torres",
+      "shortName": "F. Torres",
+      "slug": "ferran-torres",
+      "position": "F",
+      "position_detailed": [
+        "ST",
+        "LW",
+        "RW"
+      ],
+      "jersey": "7",
+      "dateOfBirth": "2000-02-29T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 185,
+      "source": "main"
+    },
+    {
+      "id": 1162107,
+      "name": "Roony Bardghji",
+      "shortName": "R. Bardghji",
+      "slug": "roony-bardghji",
+      "position": "F",
+      "position_detailed": [
+        "RW"
+      ],
+      "jersey": "19",
+      "dateOfBirth": "2005-11-15T00:00:00+00:00",
+      "country": "Sweden",
+      "preferredFoot": "Left",
+      "height": 173,
+      "source": "main"
+    },
+    {
+      "id": 1402912,
+      "name": "Lamine Yamal",
+      "shortName": "L. Yamal",
+      "slug": "lamine-yamal",
+      "position": "M",
+      "position_detailed": [
+        "RW"
+      ],
+      "jersey": "10",
+      "dateOfBirth": "2007-07-13T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Left",
+      "height": 180,
+      "source": "main"
+    },
+    {
+      "id": 831005,
+      "name": "Raphinha",
+      "shortName": "Raphinha",
+      "slug": "raphinha",
+      "position": "M",
+      "position_detailed": [
+        "LW"
+      ],
+      "jersey": "11",
+      "dateOfBirth": "1996-12-14T00:00:00+00:00",
+      "country": "Brazil",
+      "preferredFoot": "Left",
+      "height": 176,
+      "source": "main"
+    },
+    {
+      "id": 992587,
+      "name": "Pedri",
+      "shortName": "Pedri",
+      "slug": "pedri",
+      "position": "M",
+      "position_detailed": [
+        "MC",
+        "DM"
+      ],
+      "jersey": "8",
+      "dateOfBirth": "2002-11-25T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 174,
+      "source": "main"
+    },
+    {
+      "id": 1103693,
+      "name": "Pablo Gavi",
+      "shortName": "Gavi",
+      "slug": "gavi",
+      "position": "M",
+      "position_detailed": [
+        "MC",
+        "LW"
+      ],
+      "jersey": "6",
+      "dateOfBirth": "2004-08-05T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 173,
+      "source": "main"
+    },
+    {
+      "id": 795222,
+      "name": "Frenkie de Jong",
+      "shortName": "F. de Jong",
+      "slug": "frenkie-de-jong",
+      "position": "M",
+      "position_detailed": [
+        "MC",
+        "DM"
+      ],
+      "jersey": "21",
+      "dateOfBirth": "1997-05-12T00:00:00+00:00",
+      "country": "Netherlands",
+      "preferredFoot": "Right",
+      "height": 180,
+      "source": "main"
+    },
+    {
+      "id": 1153270,
+      "name": "Fermín López",
+      "shortName": "F. López",
+      "slug": "fermin-lopez",
+      "position": "M",
+      "position_detailed": [
+        "AM",
+        "MC"
+      ],
+      "jersey": "16",
+      "dateOfBirth": "2003-05-11T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 176,
+      "source": "main"
+    },
+    {
+      "id": 789071,
+      "name": "Dani Olmo",
+      "shortName": "D. Olmo",
+      "slug": "dani-olmo",
+      "position": "M",
+      "position_detailed": [
+        "AM",
+        "MC"
+      ],
+      "jersey": "20",
+      "dateOfBirth": "1998-05-07T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 179,
+      "source": "main"
+    },
+    {
+      "id": 1526618,
+      "name": "Marc Bernal",
+      "shortName": "M. Bernal",
+      "slug": "marc-bernal",
+      "position": "M",
+      "position_detailed": [
+        "MC"
+      ],
+      "jersey": "22",
+      "dateOfBirth": "2007-05-26T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Left",
+      "height": 193,
+      "source": "main"
+    },
+    {
+      "id": 1000483,
+      "name": "Marc Casadó",
+      "shortName": "M. Casadó",
+      "slug": "marc-casado",
+      "position": "M",
+      "position_detailed": [
+        "MC",
+        "DM"
+      ],
+      "jersey": "17",
+      "dateOfBirth": "2003-09-14T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 172,
+      "source": "main"
+    },
+    {
+      "id": 1402913,
+      "name": "Pau Cubarsí",
+      "shortName": "P. Cubarsí",
+      "slug": "pau-cubarsi",
+      "position": "D",
+      "position_detailed": [
+        "DC"
+      ],
+      "jersey": "5",
+      "dateOfBirth": "2007-01-22T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 184,
+      "source": "main"
+    },
+    {
+      "id": 827212,
+      "name": "Jules Koundé",
+      "shortName": "J. Koundé",
+      "slug": "jules-kounde",
+      "position": "D",
+      "position_detailed": [
+        "DR"
+      ],
+      "jersey": "23",
+      "dateOfBirth": "1998-11-12T00:00:00+00:00",
+      "country": "France",
+      "preferredFoot": "Right",
+      "height": 180,
+      "source": "main"
+    },
+    {
+      "id": 997035,
+      "name": "Alejandro Balde",
+      "shortName": "A. Balde",
+      "slug": "alejandro-balde",
+      "position": "D",
+      "position_detailed": [
+        "DL"
+      ],
+      "jersey": "3",
+      "dateOfBirth": "2003-10-18T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Left",
+      "height": 177,
+      "source": "main"
+    },
+    {
+      "id": 925097,
+      "name": "Ronald Araújo",
+      "shortName": "R. Araújo",
+      "slug": "ronald-araujo",
+      "position": "D",
+      "position_detailed": [
+        "DC"
+      ],
+      "jersey": "4",
+      "dateOfBirth": "1999-03-07T00:00:00+00:00",
+      "country": "Uruguay",
+      "preferredFoot": "Right",
+      "height": 191,
+      "source": "main"
+    },
+    {
+      "id": 138892,
+      "name": "João Cancelo",
+      "shortName": "J. Cancelo",
+      "slug": "joao-cancelo",
+      "position": "D",
+      "position_detailed": [
+        "DR",
+        "DL"
+      ],
+      "jersey": "2",
+      "dateOfBirth": "1994-05-27T00:00:00+00:00",
+      "country": "Portugal",
+      "preferredFoot": "Right",
+      "height": 182,
+      "source": "main"
+    },
+    {
+      "id": 186795,
+      "name": "Andreas Christensen",
+      "shortName": "A. Christensen",
+      "slug": "andreas-christensen",
+      "position": "D",
+      "position_detailed": [
+        "DC"
+      ],
+      "jersey": "15",
+      "dateOfBirth": "1996-04-10T00:00:00+00:00",
+      "country": "Denmark",
+      "preferredFoot": "Right",
+      "height": 188,
+      "source": "main"
+    },
+    {
+      "id": 876214,
+      "name": "Eric García",
+      "shortName": "E. García",
+      "slug": "eric-garcia",
+      "position": "D",
+      "position_detailed": [
+        "DC",
+        "DR",
+        "MC"
+      ],
+      "jersey": "24",
+      "dateOfBirth": "2001-01-09T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 182,
+      "source": "main"
+    },
+    {
+      "id": 1094827,
+      "name": "Gerard Martín",
+      "shortName": "G. Martín",
+      "slug": "gerard-martin",
+      "position": "D",
+      "position_detailed": [
+        "DL",
+        "DC"
+      ],
+      "jersey": "18",
+      "dateOfBirth": "2002-02-26T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Left",
+      "height": 186,
+      "source": "main"
+    },
+    {
+      "id": 1546073,
+      "name": "Xavi Espart",
+      "shortName": "X. Espart",
+      "slug": "xavi-espart",
+      "position": "D",
+      "position_detailed": [
+        "DR"
+      ],
+      "jersey": "42",
+      "dateOfBirth": "2007-05-21T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 175,
+      "source": "main"
+    },
+    {
+      "id": 930267,
+      "name": "Joan García",
+      "shortName": "J. García",
+      "slug": "joan-garcia",
+      "position": "G",
+      "position_detailed": [
+        "GK"
+      ],
+      "jersey": "13",
+      "dateOfBirth": "2001-05-04T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 193,
+      "source": "main"
+    },
+    {
+      "id": 50490,
+      "name": "Wojciech Szczęsny",
+      "shortName": "W. Szczęsny",
+      "slug": "wojciech-szczesny",
+      "position": "G",
+      "position_detailed": [
+        "GK"
+      ],
+      "jersey": "25",
+      "dateOfBirth": "1990-04-18T00:00:00+00:00",
+      "country": "Poland",
+      "preferredFoot": "Right",
+      "height": 196,
+      "source": "main"
+    },
+    {
+      "id": 1402907,
+      "name": "Diego Kochen",
+      "shortName": "D. Kochen",
+      "slug": "kochen-diego",
+      "position": "G",
+      "position_detailed": [
+        "GK"
+      ],
+      "jersey": "31",
+      "dateOfBirth": "2006-03-19T00:00:00+00:00",
+      "country": "USA",
+      "preferredFoot": "Right",
+      "height": 188,
+      "source": "main"
+    },
+    {
+      "id": 1929977,
+      "name": "Eder Aller",
+      "shortName": "E. Aller",
+      "slug": "eder-aller",
+      "position": "G",
+      "position_detailed": [
+        "GK"
+      ],
+      "jersey": "33",
+      "dateOfBirth": "2007-04-04T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 194,
+      "source": "main"
+    },
+    {
+      "id": 1542744,
+      "name": "Ibrahim Diarra",
+      "shortName": "I. Diarra",
+      "slug": "ibrahim-diarra",
+      "position": "F",
+      "position_detailed": [
+        "RW"
+      ],
+      "jersey": "24",
+      "dateOfBirth": "2006-12-12T00:00:00+00:00",
+      "country": "Mali",
+      "preferredFoot": "Left",
+      "height": 180,
+      "source": "athletic"
+    },
+    {
+      "id": 1493491,
+      "name": "Juan Hernández",
+      "shortName": "J. Hernández",
+      "slug": "juan-hernandez",
+      "position": "F",
+      "position_detailed": [
+        "MC"
+      ],
+      "jersey": "41",
+      "dateOfBirth": "2007-07-21T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 178,
+      "source": "athletic"
+    },
+    {
+      "id": 1657202,
+      "name": "Shane Kluivert",
+      "shortName": "S. Kluivert",
+      "slug": "shane-kluivert",
+      "position": "F",
+      "position_detailed": [
+        "ST"
+      ],
+      "jersey": "7",
+      "dateOfBirth": "2007-09-24T00:00:00+00:00",
+      "country": "Netherlands",
+      "preferredFoot": "Right",
+      "height": 178,
+      "source": "athletic"
+    },
+    {
+      "id": 1539491,
+      "name": "Òscar Gistau",
+      "shortName": "Ò. Gistau",
+      "slug": "oscar-gistau",
+      "position": "F",
+      "position_detailed": [
+        "ST"
+      ],
+      "jersey": "9",
+      "dateOfBirth": "2008-03-08T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 181,
+      "source": "athletic"
+    },
+    {
+      "id": 1142257,
+      "name": "Víctor Barberá",
+      "shortName": "V. Barberá",
+      "slug": "victor-barbera",
+      "position": "F",
+      "position_detailed": [
+        "ST"
+      ],
+      "jersey": "9",
+      "dateOfBirth": "2004-08-20T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 177,
+      "source": "athletic"
+    },
+    {
+      "id": 1134431,
+      "name": "Oscar Ureña",
+      "shortName": "O. Ureña",
+      "slug": "oscar-urena",
+      "position": "F",
+      "position_detailed": [
+        "LW"
+      ],
+      "jersey": "11",
+      "dateOfBirth": "2003-05-31T00:00:00+00:00",
+      "country": "Dominican Republic",
+      "preferredFoot": "Right",
+      "height": 171,
+      "source": "athletic"
+    },
+    {
+      "id": 1384639,
+      "name": "Joaquin Delgado",
+      "shortName": "J. Delgado",
+      "slug": "joaquin-delgado",
+      "position": "F",
+      "position_detailed": "",
+      "jersey": "19",
+      "dateOfBirth": "2002-03-26T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 187,
+      "source": "athletic"
+    },
+    {
+      "id": 2229087,
+      "name": "Nuhu Fofana",
+      "shortName": "N. Fofana",
+      "slug": "nuhu-fofana",
+      "position": "F",
+      "position_detailed": "",
+      "jersey": "20",
+      "dateOfBirth": "2008-07-28T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": null,
+      "height": null,
+      "source": "athletic"
+    },
+    {
+      "id": 2457205,
+      "name": "Juan Hernández Torres",
+      "shortName": "J. H. Torres",
+      "slug": "juan-hernandez-torres",
+      "position": "F",
+      "position_detailed": "",
+      "jersey": "67",
+      "dateOfBirth": "2007-07-21T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 178,
+      "source": "athletic"
+    },
+    {
+      "id": 1590761,
+      "name": "Toni Fernández",
+      "shortName": "T. Fernández",
+      "slug": "toni-fernandez",
+      "position": "M",
+      "position_detailed": [
+        "RW"
+      ],
+      "jersey": "29",
+      "dateOfBirth": "2008-07-15T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Left",
+      "height": 175,
+      "source": "athletic"
+    },
+    {
+      "id": 1939137,
+      "name": "Tomás Marqués",
+      "shortName": "T. Marqués",
+      "slug": "tomas-marques",
+      "position": "M",
+      "position_detailed": [
+        "MC"
+      ],
+      "jersey": "43",
+      "dateOfBirth": "2006-10-30T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 185,
+      "source": "athletic"
+    },
+    {
+      "id": 1214990,
+      "name": "Dani Rodríguez",
+      "shortName": "D. Rodríguez",
+      "slug": "dani-rodriguez",
+      "position": "M",
+      "position_detailed": [
+        "LW"
+      ],
+      "jersey": "37",
+      "dateOfBirth": "2005-08-09T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Left",
+      "height": 172,
+      "source": "athletic"
+    },
+    {
+      "id": 1544614,
+      "name": "Guillermo Fernández",
+      "shortName": "G. Fernández",
+      "slug": "guillermo-fernandez",
+      "position": "M",
+      "position_detailed": [
+        "MC"
+      ],
+      "jersey": "10",
+      "dateOfBirth": "2008-06-18T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 181,
+      "source": "athletic"
+    },
+    {
+      "id": 1457200,
+      "name": "Abdul Aziz Issah",
+      "shortName": "A. A. Issah",
+      "slug": "abdul-aziz-issah",
+      "position": "M",
+      "position_detailed": [
+        "AM"
+      ],
+      "jersey": "19",
+      "dateOfBirth": "2005-11-20T00:00:00+00:00",
+      "country": "Ghana",
+      "preferredFoot": "Left",
+      "height": 164,
+      "source": "athletic"
+    },
+    {
+      "id": 2128084,
+      "name": "Ebrima Tunkara",
+      "shortName": "E. Tunkara",
+      "slug": "ebrima-tunkara",
+      "position": "M",
+      "position_detailed": [
+        "MC"
+      ],
+      "jersey": "18",
+      "dateOfBirth": "2010-03-10T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Left",
+      "height": 178,
+      "source": "athletic"
+    },
+    {
+      "id": 1544613,
+      "name": "Brian Fariñas",
+      "shortName": "B. Fariñas",
+      "slug": "brian-farinas",
+      "position": "M",
+      "position_detailed": [
+        "MC"
+      ],
+      "jersey": "8",
+      "dateOfBirth": "2006-02-09T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 185,
+      "source": "athletic"
+    },
+    {
+      "id": 1085572,
+      "name": "Roger Martínez",
+      "shortName": "R. Martínez",
+      "slug": "roger-martinez",
+      "position": "M",
+      "position_detailed": [
+        "MC"
+      ],
+      "jersey": "6",
+      "dateOfBirth": "2004-01-01T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 177,
+      "source": "athletic"
+    },
+    {
+      "id": 2076883,
+      "name": "Pedro Villar",
+      "shortName": "P. Villar",
+      "slug": "pedro-villar",
+      "position": "M",
+      "position_detailed": "",
+      "jersey": "8",
+      "dateOfBirth": "2008-01-11T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 178,
+      "source": "athletic"
+    },
+    {
+      "id": 2014710,
+      "name": "Nil Vicens Ponsati",
+      "shortName": "N. V. Ponsati",
+      "slug": "nil-vicens-ponsati",
+      "position": "M",
+      "position_detailed": "",
+      "jersey": "11",
+      "dateOfBirth": "2008-07-29T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": null,
+      "height": 176,
+      "source": "athletic"
+    },
+    {
+      "id": 2076887,
+      "name": "Adam Argemí",
+      "shortName": "A. Argemí",
+      "slug": "adam-argemi",
+      "position": "M",
+      "position_detailed": "",
+      "jersey": null,
+      "dateOfBirth": "2008-02-05T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": null,
+      "source": "athletic"
+    },
+    {
+      "id": 1587196,
+      "name": "Jofre Torrents ",
+      "shortName": "J. Torrents ",
+      "slug": "jofre-torrents",
+      "position": "D",
+      "position_detailed": [
+        "DL"
+      ],
+      "jersey": "26",
+      "dateOfBirth": "2007-01-28T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Left",
+      "height": 187,
+      "source": "athletic"
+    },
+    {
+      "id": 1464652,
+      "name": "Álvaro Cortés",
+      "shortName": "Á. Cortés",
+      "slug": "alvaro-cortes",
+      "position": "D",
+      "position_detailed": [
+        "DC"
+      ],
+      "jersey": "36",
+      "dateOfBirth": "2005-03-17T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Left",
+      "height": 189,
+      "source": "athletic"
+    },
+    {
+      "id": 1590760,
+      "name": "Landry Farré",
+      "shortName": "L. Farré",
+      "slug": "landry-farre",
+      "position": "D",
+      "position_detailed": [
+        "DC"
+      ],
+      "jersey": "14",
+      "dateOfBirth": "2007-01-01T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 178,
+      "source": "athletic"
+    },
+    {
+      "id": 1457390,
+      "name": "David Oduro",
+      "shortName": "D. Oduro",
+      "slug": "david-oduro",
+      "position": "D",
+      "position_detailed": [
+        "DL"
+      ],
+      "jersey": "18",
+      "dateOfBirth": "2006-06-12T00:00:00+00:00",
+      "country": "Ghana",
+      "preferredFoot": "Left",
+      "height": 174,
+      "source": "athletic"
+    },
+    {
+      "id": 1466125,
+      "name": "Alexis Olmedo",
+      "shortName": "A. Olmedo",
+      "slug": "alexis-olmedo",
+      "position": "D",
+      "position_detailed": [
+        "DC"
+      ],
+      "jersey": "3",
+      "dateOfBirth": "2006-01-02T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 187,
+      "source": "athletic"
+    },
+    {
+      "id": 1926117,
+      "name": "Alex Campos",
+      "shortName": "A. Campos",
+      "slug": "alex-campos",
+      "position": "D",
+      "position_detailed": [
+        "DC"
+      ],
+      "jersey": "14",
+      "dateOfBirth": "2008-02-02T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 185,
+      "source": "athletic"
+    },
+    {
+      "id": 1482410,
+      "name": "Patricio Pacifico",
+      "shortName": "P. Pacífico",
+      "slug": "pacifico-patricio",
+      "position": "D",
+      "position_detailed": [
+        "DL"
+      ],
+      "jersey": "14",
+      "dateOfBirth": "2006-04-08T00:00:00+00:00",
+      "country": "Uruguay",
+      "preferredFoot": "Left",
+      "height": 187,
+      "source": "athletic"
+    },
+    {
+      "id": 1153280,
+      "name": "Joan Anaya",
+      "shortName": "J. Anaya",
+      "slug": "joan-anaya",
+      "position": "D",
+      "position_detailed": [
+        "DR"
+      ],
+      "jersey": "2",
+      "dateOfBirth": "2005-02-16T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 174,
+      "source": "athletic"
+    },
+    {
+      "id": 1939135,
+      "name": "Alexander Walton",
+      "shortName": "A. Walton",
+      "slug": "alexander-walton",
+      "position": "D",
+      "position_detailed": "",
+      "jersey": "15",
+      "dateOfBirth": "2006-04-12T00:00:00+00:00",
+      "country": "England",
+      "preferredFoot": "Left",
+      "height": 179,
+      "source": "athletic"
+    },
+    {
+      "id": 1590920,
+      "name": "Guillem Víctor",
+      "shortName": "G. Víctor",
+      "slug": "guillem-victor",
+      "position": "D",
+      "position_detailed": [
+        "DR"
+      ],
+      "jersey": "2",
+      "dateOfBirth": "2007-05-03T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 177,
+      "source": "athletic"
+    },
+    {
+      "id": 2229086,
+      "name": "Joan Ingles",
+      "shortName": "J. Ingles",
+      "slug": "joan-ingles",
+      "position": "D",
+      "position_detailed": "",
+      "jersey": "17",
+      "dateOfBirth": "2009-04-09T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": null,
+      "height": null,
+      "source": "athletic"
+    },
+    {
+      "id": 2507245,
+      "name": "Leo Saca",
+      "shortName": "L. Saca",
+      "slug": "leo-saca",
+      "position": "D",
+      "position_detailed": "",
+      "jersey": null,
+      "dateOfBirth": "2007-01-06T00:00:00+00:00",
+      "country": "Moldova",
+      "preferredFoot": null,
+      "height": 184,
+      "source": "athletic"
+    },
+    {
+      "id": 964171,
+      "name": "Emilio Bernad",
+      "shortName": "E. Bernad",
+      "slug": "emilio-bernad",
+      "position": "G",
+      "position_detailed": [
+        "GK"
+      ],
+      "jersey": "25",
+      "dateOfBirth": "1999-09-22T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Left",
+      "height": 184,
+      "source": "athletic"
+    },
+    {
+      "id": 2229083,
+      "name": "Pablo Pena",
+      "shortName": "P. Pena",
+      "slug": "pablo-pena",
+      "position": "G",
+      "position_detailed": "",
+      "jersey": "12",
+      "dateOfBirth": "2010-03-25T00:00:00+00:00",
+      "country": "Spain",
+      "preferredFoot": "Right",
+      "height": 170,
+      "source": "athletic"
+    }
+  ]
+}

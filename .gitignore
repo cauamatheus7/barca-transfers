@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Caches/locais
+*.png
+.pytest_cache/
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Não commitar saída temporária do Playwright
+.playwright-mcp/
+
+# news_raw é regenerado a cada run da rotina
+cache/news_raw.json

@@ -1,0 +1,106 @@
+{
+  "items": [
+    {
+      "id": "a3f11d56ebea",
+      "url": "https://x.com/MatteMoretto/status/2017549146178146701",
+      "title": "Matteo Moretto: Barcelona is already negotiating Alessandro Bastoni's contract details",
+      "snippet": "Moretto exclusive: contract talks advancing with Bastoni for summer 2026 move. Barça willing to meet Inter's €70M valuation.",
+      "journalist": "Matteo Moretto",
+      "query": "\"Matteo Moretto\" Barcelona refuerzo fichaje",
+      "published_at": "2026-05-04T11:00:00",
+      "first_seen": "2026-05-04T08:00:00",
+      "last_seen": "2026-05-04T08:00:00",
+      "players_mentioned": [
+        826188
+      ]
+    },
+    {
+      "id": "88477d971f25",
+      "url": "https://madrid-barcelona.com/en/fc-barcelona/matteo-moretto-reveals-the-center-back-that-fc-barcelona-wants-to-sign-good-beautiful-and-cheap-bargain",
+      "title": "Matteo Moretto reveals the center-back that FC Barcelona want to sign: good, pretty, and cheap",
+      "snippet": "Moretto: Barcelona looking at Murillo from Nottingham Forest as a budget option for the centre-back position. Could be a bargain at €40M.",
+      "journalist": "Matteo Moretto",
+      "query": "\"Matteo Moretto\" Barcelona refuerzo fichaje",
+      "published_at": "2026-05-04T09:15:00",
+      "first_seen": "2026-05-04T08:00:00",
+      "last_seen": "2026-05-04T08:00:00",
+      "players_mentioned": [
+        1199282
+      ]
+    },
+    {
+      "id": "eb3c03befc3b",
+      "url": "https://madrid-barcelona.com/en/fc-barcelona/fabrizio-romano-announces-a-signing-that-barcelona-is-already-negotiating-contacts-in-the-last-48-hours",
+      "title": "Fabrizio Romano announces the first 2026 signing that Barça are already negotiating",
+      "snippet": "Barcelona has initiated negotiations for Alessandro Bastoni from Inter Milan. Romano confirms there are advanced contacts in the last 48 hours for the Italian center-back.",
+      "journalist": "Fabrizio Romano",
+      "query": "\"Fabrizio Romano\" Barcelona signing transfer May 2026",
+      "published_at": "2026-05-04T07:30:00",
+      "first_seen": "2026-05-04T08:00:00",
+      "last_seen": "2026-05-04T08:00:00",
+      "players_mentioned": [
+        826188
+      ]
+    },
+    {
+      "id": "0a8c31a84f27",
+      "url": "https://www.facebook.com/barcanews24x7/posts/-fabrizio-romano-confirms-barcelona-has-made-an-enquiry-for-juli%C3%A1n-alvarez",
+      "title": "Fabrizio Romano confirms Barcelona has made an enquiry for Julián Álvarez",
+      "snippet": "Romano: Barcelona has made an official enquiry for Julián Alvarez of Atlético Madrid. The forward could cost over €100M.",
+      "journalist": "Fabrizio Romano",
+      "query": "\"Fabrizio Romano\" Barcelona signing transfer May 2026",
+      "published_at": "2026-05-03T18:45:00",
+      "first_seen": "2026-05-04T08:00:00",
+      "last_seen": "2026-05-04T08:00:00",
+      "players_mentioned": [
+        944656
+      ]
+    },
+    {
+      "id": "e7ccfbb98bfe",
+      "url": "https://x.com/tjuanmarti/status/1463556118735687680",
+      "title": "Toni Juanmartí: Joaquim Piera explica que Artur Cabral es el elegido para reforzar la delantera",
+      "snippet": "Juanmartí relata via Joaquim Piera que el club catalán evalúa opciones de delantera. Rashford continúa siendo prioridad para el extremo izquierdo.",
+      "journalist": "Toni Juanmartí",
+      "query": "\"Toni Juanmartí\" Barça refuerzo central",
+      "published_at": "2026-05-03T10:30:00",
+      "first_seen": "2026-05-04T08:00:00",
+      "last_seen": "2026-05-04T08:00:00",
+      "players_mentioned": [
+        814590
+      ]
+    },
+    {
+      "id": "edfd14a4073b",
+      "url": "https://www.football365.com/news/man-city-star-finalises-agreement-barcelona-romano-names-third-player-leave",
+      "title": "Man City star 'finalises agreement' to join Barcelona after Romano reveals third player to leave",
+      "snippet": "Bernardo Silva agreed personal terms with Barcelona for free transfer. Manchester City contract expires summer 2026.",
+      "journalist": "Fabrizio Romano",
+      "query": "\"Fabrizio Romano\" Barcelona signing transfer May 2026",
+      "published_at": "2026-05-02T15:20:00",
+      "first_seen": "2026-05-04T08:00:00",
+      "last_seen": "2026-05-04T08:00:00",
+      "players_mentioned": []
+    },
+    {
+      "id": "23a3c43a8f9e",
+      "url": "https://madrid-barcelona.com/en/fc-barcelona/neither-nathan-ake-nor-marcos-senesi-matteo-moretto-reveals-name-of-christensens-replacement-january",
+      "title": "Matteo Moretto: Marcos Senesi closely followed by Barcelona",
+      "snippet": "Marcos Senesi from Bournemouth and Branimir Mlacic on Barça's radar to replace Christensen. Decision in January.",
+      "journalist": "Matteo Moretto",
+      "query": "\"Matteo Moretto\" Barcelona refuerzo fichaje",
+      "published_at": "2026-05-01T22:00:00",
+      "first_seen": "2026-05-04T08:00:00",
+      "last_seen": "2026-05-04T08:00:00",
+      "players_mentioned": [
+        186795
+      ]
+    }
+  ],
+  "_meta": {
+    "total": 7,
+    "last_run": "2026-05-04T08:00:00",
+    "added_this_run": 7,
+    "updated_this_run": 0
+  }
+}
