@@ -18,17 +18,21 @@ Garante que `curl_cffi` está disponível (necessário pelos scrapers):
 pip install --quiet curl_cffi
 ```
 
-## Passo 1 — WebSearch (7 jornalistas)
+## Passo 1 — WebSearch (9 queries: 7 jornalistas + 2 saídas)
 
-Rode WebSearch para cada query EXATAMENTE como está abaixo:
+Rode WebSearch para cada query EXATAMENTE como está abaixo. As 7 primeiras
+cobrem rumores de jornalistas especializados (entradas e saídas). As 2 últimas
+são genéricas e cobrem especificamente saídas/vendas do elenco atual:
 
-1. `"Fabrizio Romano" Barcelona transfer signing`
-2. `"Gerard Romero" Barça fichaje refuerzo`
-3. `"Matteo Moretto" Barcelona refuerzo fichaje`
-4. `"Reshad Rahman" Barcelona transfer`
-5. `"Toni Juanmartí" Barça fichaje`
-6. `"Joaquim Piera" Barça fichaje`
-7. `"Adrià Soldevila" Barça fichaje`
+1. `"Fabrizio Romano" Barcelona transfer 2026`
+2. `"Gerard Romero" Barça mercado 2026`
+3. `"Matteo Moretto" Barcelona mercado 2026`
+4. `"Reshad Rahman" Barcelona transfer 2026`
+5. `"Toni Juanmartí" Barça mercado`
+6. `"Joaquim Piera" Barça mercado`
+7. `"Adrià Soldevila" Barça mercado`
+8. `Barcelona player leaving exit transfer 2026`
+9. `Barça salida jugador venta 2026`
 
 ## Passo 2 — Compilar JSON
 

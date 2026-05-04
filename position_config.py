@@ -24,13 +24,13 @@ REFINED_POSITIONS = {
     "Ronald Araújo": "CB",
     "Andreas Christensen": "CB",
     "Eric García": "CB",
-    "Xavi Espart": "CB",
 
     # Laterais
     "Jules Koundé": "RB",
     "João Cancelo": "RB",
     "Alejandro Balde": "LB",
     "Gerard Martín": "LB",
+    "Xavi Espart": "LB",
 
     # Volantes
     "Marc Casadó": "DM",
