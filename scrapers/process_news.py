@@ -21,7 +21,7 @@ import hashlib
 import re
 import sys
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -29,9 +29,15 @@ CACHE = ROOT / "cache"
 
 
 def slugify(s: str) -> str:
-    """Versão simples (sem acento, lowercase) pra comparação fuzzy de nomes."""
+    """Sem acento + lowercase + sem pontuação — pra comparação fuzzy de nomes.
+
+    R4: pontuação removida ('A. Bastoni' -> 'a bastoni') antes do match contra texto
+    de notícias que normalmente vem sem ponto.
+    """
     s = unicodedata.normalize("NFKD", s)
     s = "".join(c for c in s if not unicodedata.combining(c))
+    s = re.sub(r"[^a-zA-Z0-9 ]+", " ", s)   # punctuação -> espaço
+    s = re.sub(r"\s+", " ", s)               # collapse spaces
     return s.lower().strip()
 
 
@@ -40,13 +46,19 @@ def url_id(url: str) -> str:
 
 
 def load_known_players() -> list[dict]:
-    """Carrega rumors + squad pra termos um whitelist de nomes a detectar."""
+    """Carrega rumors + squad pra termos um whitelist de nomes a detectar.
+
+    R6: avisa explicitamente se algum arquivo está faltando — sem ele, detecção
+    silenciosa retornaria zero menções e usuário pensaria que é semana fraca.
+    """
     out = []
     for fname in ["rumors.json", "squad.json"]:
         p = CACHE / fname
         if p.exists():
             data = json.loads(p.read_text(encoding="utf-8"))
             out.extend(data.get("players", []))
+        else:
+            print(f"[WARN] {p} não existe — detecção de menções vai ser parcial")
     return out
 
 
@@ -89,19 +101,20 @@ def detect_players(text: str, name_index: dict[str, int]) -> list[int]:
 
 
 def parse_dt(s: str | None) -> str | None:
+    """Normaliza ISO datetime. Loga (não silencia) inputs malformados."""
     if not s:
         return None
     try:
-        # Aceita ISO format puro ou com Z
         dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
         return dt.isoformat()
     except (ValueError, TypeError):
+        print(f"[WARN] published_at inválido descartado: {s!r}")
         return None
 
 
 def merge_news(existing: dict, raw: dict, name_index: dict[str, int]) -> dict:
     """Merge raw items into existing news.json. Atualiza last_seen em duplicatas."""
-    fetched_at = parse_dt(raw.get("fetched_at")) or datetime.now().isoformat(timespec="seconds")
+    fetched_at = parse_dt(raw.get("fetched_at")) or datetime.now(timezone.utc).isoformat(timespec="seconds")
     items_by_id: dict[str, dict] = {it["id"]: it for it in existing.get("items", [])}
 
     new_count = updated_count = 0
@@ -179,7 +192,7 @@ def update_rumor_activity(rumors_data: dict, news_data: dict) -> dict:
         key=lambda p: (p.get("last_seen") or "", p.get("mentions_count") or 0),
         reverse=True,
     )
-    rumors_data["last_processed"] = datetime.now().isoformat(timespec="seconds")
+    rumors_data["last_processed"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     return rumors_data
 
 
@@ -196,6 +209,10 @@ def main(argv: list[str]) -> int:
     known_players = load_known_players()
     name_index = build_name_index(known_players)
     print(f"name_index: {len(name_index)} variações de {len(known_players)} jogadores")
+    if not name_index:
+        # R6: aborta antes de gerar dados zerados silenciosamente
+        print("[ERR] name_index vazio — squad.json e rumors.json estão ausentes ou vazios.")
+        return 2
 
     news_path = CACHE / "news.json"
     existing_news = json.loads(news_path.read_text(encoding="utf-8")) if news_path.exists() else {"items": []}

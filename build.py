@@ -47,7 +47,12 @@ def get_age(date_of_birth) -> int | None:
 
 def refine_position(player: dict) -> str:
     """Retorna posição refinada (GK/CB/LB/RB/DM/CM/AM/LW/RW/ST) ou genérica.
-    B2: prefere position_detailed (do SofaScore) antes do fallback genérico."""
+    Ordem de precedência:
+    1. REFINED_POSITIONS (override manual por nome)
+    2. position_target (do rumor)
+    3. position_detailed (do SofaScore)
+    4. fallback genérico G/D/M/F → GK/CB/CM/ST
+    """
     name = player["name"]
     if name in REFINED_POSITIONS:
         return REFINED_POSITIONS[name]
@@ -66,6 +71,7 @@ def refine_position(player: dict) -> str:
 def load_news() -> list[dict]:
     p = CACHE / "news.json"
     if not p.exists():
+        print(f"[WARN] {p} não existe — feed ficará vazio. Rotina /schedule já rodou?")
         return []
     return json.loads(p.read_text(encoding="utf-8")).get("items", [])
 
@@ -640,16 +646,36 @@ fields.forEach(f => f.select.addEventListener("change", refreshDropdowns));
 const NEWS_PAGE_SIZE = 8;
 let newsExpanded = false;
 
+// R1: HTML-escape para conteúdo de fontes externas (title/snippet do WebSearch)
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+// R3: força ISO sem timezone a ser interpretado como UTC (evita drift local-vs-UTC)
+function toDate(iso) {
+  if (!iso) return null;
+  const hasTZ = /Z$|[+-]\d{2}:?\d{2}$/.test(iso);
+  return new Date(hasTZ ? iso : iso + "Z");
+}
+
 function dayKey(iso) {
-  if (!iso) return "?";
-  return iso.slice(0, 10);
+  const dt = toDate(iso);
+  if (!dt || isNaN(dt)) return "";
+  // Usa data LOCAL (não UTC) — assim "Hoje" reflete o dia do usuário
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function dayLabel(key) {
-  if (key === "?") return "Sem data";
+  if (!key) return "Sem data";
   const today = new Date();
-  const todayKey = today.toISOString().slice(0, 10);
-  const yest = new Date(today.getTime() - 86400000).toISOString().slice(0, 10);
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+  const yd = new Date(today.getTime() - 86400000);
+  const yest = `${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,"0")}-${String(yd.getDate()).padStart(2,"0")}`;
   if (key === todayKey) return "Hoje";
   if (key === yest) return "Ontem";
   const [y, m, d] = key.split("-");
@@ -657,9 +683,9 @@ function dayLabel(key) {
 }
 
 function fmtTime(iso) {
-  if (!iso) return "";
-  const dt = new Date(iso);
-  return isNaN(dt) ? "" : dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const dt = toDate(iso);
+  if (!dt || isNaN(dt)) return "";
+  return dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
 function renderNews() {
@@ -674,7 +700,7 @@ function renderNews() {
     return;
   }
 
-  meta.textContent = `${items.length} notícias indexadas · atualizado ${window.DATA.generated}`;
+  meta.textContent = `${items.length} notícias indexadas · atualizado ${esc(window.DATA.generated)}`;
 
   const visible = newsExpanded ? items : items.slice(0, NEWS_PAGE_SIZE);
   // Agrupa por dia
@@ -683,25 +709,28 @@ function renderNews() {
     const k = dayKey(it.published_at || it.last_seen);
     (byDay[k] = byDay[k] || []).push(it);
   }
-  const dayKeys = Object.keys(byDay).sort().reverse();
+  // R2: separa dias com data (ordenados desc) e dia sem data (vai pro fim)
+  const datedKeys = Object.keys(byDay).filter(k => k).sort().reverse();
+  const noDate = byDay[""] ? [""] : [];
+  const dayKeys = [...datedKeys, ...noDate];
 
   let html = "";
   for (const k of dayKeys) {
-    html += `<div class="day-block"><h3 class="day-header">${dayLabel(k)}</h3>`;
+    html += `<div class="day-block"><h3 class="day-header">${esc(dayLabel(k))}</h3>`;
     for (const it of byDay[k]) {
       const time = fmtTime(it.published_at || it.last_seen);
       const tags = (it.players_mentioned || [])
         .map(pid => window.DATA.player_names[pid])
         .filter(n => n)
-        .map(n => `<span class="player-tag">${n}</span>`).join("");
+        .map(n => `<span class="player-tag">${esc(n)}</span>`).join("");
       html += `
         <article class="news-item">
           <div class="row1">
-            <span class="journalist">${it.journalist || "?"}</span>
-            <span>${time}</span>
+            <span class="journalist">${esc(it.journalist || "?")}</span>
+            <span>${esc(time)}</span>
           </div>
-          <h4><a href="${it.url}" target="_blank" rel="noopener">${it.title}</a></h4>
-          <p class="snippet">${it.snippet || ""}</p>
+          <h4><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a></h4>
+          <p class="snippet">${esc(it.snippet || "")}</p>
           ${tags ? `<div class="player-tags">${tags}</div>` : ""}
         </article>`;
     }
