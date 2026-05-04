@@ -378,17 +378,26 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     overflow: hidden;
     margin-bottom: 14px;
     border: 1px solid var(--rule);
-    background: #f4f4f4;
-    padding: 36px 32px 0;
-    box-sizing: border-box;
+    background: var(--ink-rise);
   }
-  /* Foto menor dentro do card — padding cria moldura branca, foto não é esticada */
+  /* Layer 1: foto blurada e ampliada como background — "estende" o fundo */
+  .news-card .cover .bg {
+    position: absolute;
+    inset: -10%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(28px) saturate(1.3) brightness(0.7);
+    z-index: 1;
+  }
+  /* Layer 2: foto nítida contida no centro */
   .news-card .cover img {
+    position: relative;
+    z-index: 2;
     display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    object-position: center top;
+    object-position: center;
     transition: transform 600ms ease;
   }
   .news-card:hover .cover img { transform: scale(1.03); }
@@ -1068,13 +1077,15 @@ function newsCardHTML(it) {
   let coverHtml;
   if (mentioned.length >= 1) {
     const p = mentioned[0];
+    const photoSrc = PHOTO_URL(p.id);
     const moreBadge = mentioned.length > 1
       ? `<span class="badge">+${mentioned.length - 1}</span>`
       : `<span class="badge">${esc((it.journalist || "?").toUpperCase())}</span>`;
     coverHtml = `
       <div class="cover">
+        <div class="bg" style="background-image: url('${photoSrc}')"></div>
         ${moreBadge}
-        <img src="${PHOTO_URL(p.id)}" alt="${esc(p.name)}" loading="lazy"
+        <img src="${photoSrc}" alt="${esc(p.name)}" loading="lazy"
              onerror="this.style.display='none'">
       </div>`;
   } else {
