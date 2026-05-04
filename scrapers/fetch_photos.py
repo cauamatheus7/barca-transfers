@@ -39,33 +39,64 @@ def save_tm_ids(d: dict) -> None:
     TM_IDS_FILE.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def find_transfermarkt_photo(name: str) -> tuple[str | None, str | None]:
-    """Busca jogador no TM por nome, retorna (tm_id, photo_url_big) ou (None, None).
-    photo_url já vem na variante 'big' (600×600)."""
+def find_transfermarkt_photo(name: str, team_hint: str = "") -> tuple[str | None, str | None]:
+    """Busca jogador no TM por nome (com team_hint pra desambiguar homônimos).
+
+    Retorna (tm_id, photo_url_big) ou (None, None). photo_url já vem na
+    variante 'big' (600×600). Se team_hint dado, valida que o profile
+    contém o team_hint — evita pegar João Neves quando você quer João Pedro.
+    """
     try:
         url = f"https://www.transfermarkt.com/schnellsuche/ergebnis/schnellsuche?query={name.replace(' ', '+')}"
         r = cr.get(url, impersonate="chrome131", timeout=15)
         if r.status_code != 200:
             return None, None
-        m = re.search(r"/profil/spieler/(\d+)", r.text)
-        if not m:
+        # Coleta todos os candidatos únicos preservando ordem
+        candidates: list[str] = []
+        seen: set[str] = set()
+        for tm_id in re.findall(r"/profil/spieler/(\d+)", r.text):
+            if tm_id not in seen:
+                seen.add(tm_id)
+                candidates.append(tm_id)
+        if not candidates:
             return None, None
-        tm_id = m.group(1)
-        profile = cr.get(
-            f"https://www.transfermarkt.com/x/profil/spieler/{tm_id}",
-            impersonate="chrome131",
-            timeout=15,
-        )
-        img_match = re.search(
-            r'(https://img\.a\.transfermarkt\.technology/portrait/[^"\s]+\.(?:jpg|png|webp))',
-            profile.text,
-        )
-        if not img_match:
-            return tm_id, None
-        url = img_match.group(1)
-        # Forçar variante "big" (600×600) — substitui /medium/ ou /header/ na URL
-        url_big = url.replace("/medium/", "/big/").replace("/header/", "/big/")
-        return tm_id, url_big
+
+        team_low = team_hint.lower().strip() if team_hint else ""
+        # Tenta validar candidatos contra team_hint (top 3) — fallback no primeiro
+        for idx, tm_id in enumerate(candidates[:3]):
+            profile = cr.get(
+                f"https://www.transfermarkt.com/x/profil/spieler/{tm_id}",
+                impersonate="chrome131",
+                timeout=15,
+            )
+            text_low = profile.text.lower()
+            # Match se: team_hint vazio (aceita primeiro), OU team_hint está no profile
+            if team_low and team_low not in text_low:
+                continue
+            img_match = re.search(
+                r'(https://img\.a\.transfermarkt\.technology/portrait/[^"\s]+\.(?:jpg|png|webp))',
+                profile.text,
+            )
+            if not img_match:
+                continue
+            url_big = img_match.group(1).replace("/medium/", "/big/").replace("/header/", "/big/")
+            return tm_id, url_big
+
+        # Nenhum candidato bateu com team_hint — usa primeiro como fallback
+        if candidates:
+            tm_id = candidates[0]
+            profile = cr.get(
+                f"https://www.transfermarkt.com/x/profil/spieler/{tm_id}",
+                impersonate="chrome131", timeout=15,
+            )
+            img_match = re.search(
+                r'(https://img\.a\.transfermarkt\.technology/portrait/[^"\s]+\.(?:jpg|png|webp))',
+                profile.text,
+            )
+            if img_match:
+                url_big = img_match.group(1).replace("/medium/", "/big/").replace("/header/", "/big/")
+                return tm_id, url_big
+        return None, None
     except Exception as e:
         print(f"    [TM ERR] {e}")
         return None, None
@@ -82,19 +113,22 @@ def fetch_sofascore(player_id: int) -> bytes | None:
 
 
 def fetch_image(player: dict, tm_cache: dict) -> tuple[bytes | None, str]:
-    """Tenta TM primeiro, fallback SofaScore. Retorna (bytes, origem)."""
+    """Tenta TM primeiro (com team_hint pra desambiguar), fallback SofaScore."""
     name = player.get("name", "")
     pid_str = str(player["id"])
+    # team_hint vem do current_team (rumores) ou source (squad)
+    team_hint = player.get("current_team") or ""
+    if not team_hint and player.get("source") == "main":
+        team_hint = "Barcelona"
 
-    # Cache de TM IDs
     cached = tm_cache.get(pid_str)
     tm_url = None
     if cached:
         tm_url = cached.get("photo_url")
     elif name:
-        tm_id, tm_url = find_transfermarkt_photo(name)
-        tm_cache[pid_str] = {"name": name, "tm_id": tm_id, "photo_url": tm_url}
-        time.sleep(0.5)  # respeito ao TM
+        tm_id, tm_url = find_transfermarkt_photo(name, team_hint)
+        tm_cache[pid_str] = {"name": name, "tm_id": tm_id, "photo_url": tm_url, "team_hint": team_hint}
+        time.sleep(0.5)
 
     if tm_url:
         try:

@@ -264,11 +264,6 @@
     "value_label": "€90M",
     "fetched_at": "2026-05-04"
   },
-  "975079": {
-    "value_eur": 110000000,
-    "value_label": "€110M",
-    "fetched_at": "2026-05-04"
-  },
   "832208": {
     "value_eur": 35000000,
     "value_label": "€35M",
@@ -322,6 +317,11 @@
   "791773": {
     "value_eur": 14000000,
     "value_label": "€14M",
+    "fetched_at": "2026-05-04"
+  },
+  "975079": {
+    "value_eur": 75000000,
+    "value_label": "€75M",
     "fetched_at": "2026-05-04"
   }
 }
