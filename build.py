@@ -227,6 +227,11 @@ HEAD_OPEN = r"""<!DOCTYPE html>
   }
   .ticker .label { color: var(--silver); }
   .ticker .sep   { color: var(--rule-bright); }
+  .ticker .kicker-mercado {
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.18em;
+  }
 
   /* ─── masthead ─── */
   .masthead {
@@ -376,10 +381,7 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--blue-deep) 0%, var(--ink) 100%);
-  }
-  .news-card.rumor .cover {
-    background: linear-gradient(135deg, var(--grenat-deep) 0%, var(--ink) 100%);
+    background: linear-gradient(135deg, var(--blue-deep) 0%, var(--grenat-deep) 100%);
   }
   .news-card .cover::before {
     content: "";
@@ -940,9 +942,7 @@ def _masthead(active: str) -> str:
 <div class="wrap">
 
 <div class="ticker reveal d1" id="ticker-bar">
-  <span><span class="live">LIVE</span> · MONITOR ATIVO</span>
-  <span><span class="label">JANELA</span> <span class="sep">/</span> VERÃO 2026</span>
-  <span><span class="label">FONTES</span> <span class="sep">/</span> 7 JORNALISTAS</span>
+  <span class="kicker-mercado">MERCADO</span>
   <span id="ticker-date"></span>
 </div>
 
@@ -958,7 +958,6 @@ def _masthead(active: str) -> str:
     <line x1="50" y1="12" x2="50" y2="116" stroke="#f0e8d6" stroke-width="1"/>
     <line x1="12" y1="64" x2="88" y2="64" stroke="#f0e8d6" stroke-width="1"/>
   </svg>
-  <p class="kicker">Mercado · Janela 2026 · Edição diária</p>
   <h1 class="title">Transfer<br><em>Desk</em>&nbsp;FCB.</h1>
   <nav class="page-nav">
     <a href="index.html" class="{cls_idx}">Notícias</a>
@@ -1053,7 +1052,6 @@ INDEX_BODY = r"""
   <div class="section-title">
     <span class="num">§ 01</span>
     <h2>Feed de notícias</h2>
-    <span class="meta" id="news-meta"></span>
   </div>
   <div id="news-feed"></div>
   <button class="news-toggle" id="news-toggle" style="display:none">Mostrar mais ↓</button>
@@ -1110,18 +1108,14 @@ function newsCardHTML(it) {
 
 function renderNews() {
   const container = document.getElementById("news-feed");
-  const meta = document.getElementById("news-meta");
   const toggleBtn = document.getElementById("news-toggle");
   const items = window.DATA.news || [];
 
   if (items.length === 0) {
     container.innerHTML = '<div class="news-empty">Sem notícias capturadas ainda · A rotina rodará em breve</div>';
-    meta.textContent = "";
     toggleBtn.style.display = "none";
     return;
   }
-
-  meta.textContent = `${items.length} notícias · atualizado ${esc(window.DATA.generated)}`;
 
   const visible = newsExpanded ? items : items.slice(0, NEWS_PAGE_SIZE);
   const byDay = {};
