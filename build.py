@@ -378,32 +378,17 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     overflow: hidden;
     margin-bottom: 14px;
     border: 1px solid var(--rule);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--blue-deep) 0%, var(--grenat-deep) 100%);
+    background: var(--ink-rise);
   }
-  .news-card .cover::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.95 0 0 0 0 0.95 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-    pointer-events: none;
-    z-index: 1;
-  }
-  /* Player photo "trading card" style: photo centered, size capped */
+  /* Foto preenche o card inteiro (object-fit: cover), priorizando topo (rosto) */
   .news-card .cover img {
-    position: relative;
-    z-index: 2;
-    width: auto;
-    height: 92%;
-    max-height: 100%;
-    object-fit: contain;
-    object-position: center bottom;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 12%;
     transition: transform 600ms ease;
-    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.4));
   }
-  .news-card:hover .cover img { transform: scale(1.05) translateY(-4px); }
+  .news-card:hover .cover img { transform: scale(1.04); }
   /* Text cover (no player matched) */
   .news-card .cover.text {
     align-items: flex-end;
