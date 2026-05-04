@@ -156,7 +156,7 @@ HEAD_OPEN = r"""<!DOCTYPE html>
 <title>__TITLE__</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Big+Shoulders+Display:wght@600;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Big+Shoulders+Display:wght@600;800;900&family=Allura&display=swap" rel="stylesheet">
 <style>
   :root {
     --ink: #0c0e1c;
@@ -1042,6 +1042,26 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     font-size: 10px;
   }
 
+  /* ─── watermark (assinatura do dono) ─── */
+  .watermark {
+    position: fixed;
+    bottom: 14px;
+    right: 22px;
+    font-family: "Allura", cursive;
+    font-size: 38px;
+    color: var(--paper);
+    opacity: 0.28;
+    z-index: 100;
+    pointer-events: none;
+    user-select: none;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+  @media (max-width: 560px) {
+    .watermark { font-size: 28px; bottom: 10px; right: 14px; }
+  }
+
   /* ─── reveal ─── */
   .reveal { opacity: 0; transform: translateY(8px); animation: reveal 700ms ease forwards; }
   .reveal.d1 { animation-delay: 50ms; }
@@ -1108,6 +1128,7 @@ def _masthead(active: str) -> str:
 
 FOOTER_HTML = r"""
 </div>
+<div class="watermark" aria-hidden="true">cauamxt</div>
 """
 
 
