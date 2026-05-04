@@ -374,18 +374,18 @@ HEAD_OPEN = r"""<!DOCTYPE html>
   .news-card .cover {
     position: relative;
     width: 100%;
-    aspect-ratio: 16/10;
+    aspect-ratio: 4/5;
     overflow: hidden;
     margin-bottom: 14px;
     border: 1px solid var(--rule);
     background: var(--ink-rise);
   }
-  /* Foto preenche o card inteiro (object-fit: cover), priorizando topo (rosto) */
+  /* Foto retrato preenche card inteiro */
   .news-card .cover img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center 12%;
+    object-position: center 20%;
     transition: transform 600ms ease;
   }
   .news-card:hover .cover img { transform: scale(1.04); }
