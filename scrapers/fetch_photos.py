@@ -18,30 +18,56 @@ import sys
 import time
 from io import BytesIO
 from pathlib import Path
+import numpy as np
 from _util import API, get_json
 from curl_cffi import requests as cr
-from PIL import Image
+from PIL import Image, ImageFilter
+
 
 ROOT = Path(__file__).parent.parent
 CACHE = ROOT / "cache"
 ASSETS = ROOT / "assets" / "photos"
 
-WHITE_THRESHOLD = 240  # RGB acima disso vira transparente
-
 
 def remove_white_bg(raw: bytes) -> bytes:
-    """Carrega webp/png/jpeg e troca fundo branco por transparente. Salva como webp."""
+    """Recorte com alfa gradiente + blur de borda.
+
+    Estratégia (mais sofisticada que threshold simples):
+    1. Sample múltiplos pixels de canto/borda e usa a mediana como cor de background.
+    2. Calcula distância Euclidiana RGB de cada pixel pra cor de BG.
+    3. Alfa em rampa: 0 (transparente) se muito próximo do BG, 255 se distante,
+       gradiente suave entre. Isso preserva detalhes finos (cabelo, ombros) e
+       evita serrilhamento visível.
+    4. Aplica Gaussian blur leve no canal alpha pra suavizar a borda do recorte.
+    5. Salva como WEBP com alpha.
+    """
     img = Image.open(BytesIO(raw)).convert("RGBA")
-    pixels = list(img.getdata())
-    new_pixels = []
-    for r, g, b, a in pixels:
-        if r >= WHITE_THRESHOLD and g >= WHITE_THRESHOLD and b >= WHITE_THRESHOLD:
-            new_pixels.append((r, g, b, 0))
-        else:
-            new_pixels.append((r, g, b, a))
-    img.putdata(new_pixels)
+    arr = np.array(img)
+    h, w = arr.shape[:2]
+    rgb = arr[..., :3].astype(np.int32)
+
+    # Mediana das amostras de canto e borda — robusta a corner outlier
+    samples = []
+    for y in (0, 1, 2, h - 1, h - 2, h - 3):
+        for x in (0, 1, 2, w - 1, w - 2, w - 3):
+            samples.append(rgb[y, x])
+    samples += [rgb[0, w // 2], rgb[h - 1, w // 2], rgb[h // 2, 0], rgb[h // 2, w - 1]]
+    bg = np.median(np.array(samples), axis=0)
+
+    # Distância Euclidiana ao BG por pixel
+    dist = np.sqrt(np.sum((rgb - bg) ** 2, axis=-1))
+
+    # Alpha em rampa: 0 até dist=30, 255 a partir de dist=70
+    alpha = np.clip((dist - 30) * (255.0 / 40.0), 0, 255).astype(np.uint8)
+    arr[..., 3] = alpha
+
+    img2 = Image.fromarray(arr)
+    # Soften edges com Gaussian blur leve (0.6px) só no canal alpha
+    a_blur = img2.split()[3].filter(ImageFilter.GaussianBlur(0.6))
+    img2.putalpha(a_blur)
+
     out = BytesIO()
-    img.save(out, format="WEBP", quality=85)
+    img2.save(out, format="WEBP", quality=88, method=6)
     return out.getvalue()
 
 
