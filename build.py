@@ -1072,8 +1072,9 @@ HEAD_OPEN = r"""<!DOCTYPE html>
 
 
 def _masthead(active: str) -> str:
-    """Returns the masthead + nav HTML. `active` is either 'index' or 'comparador'."""
+    """Returns the masthead + nav HTML. `active` is 'index', 'pauta' ou 'comparador'."""
     cls_idx = "active" if active == "index" else ""
+    cls_pauta = "active" if active == "pauta" else ""
     cls_cmp = "active" if active == "comparador" else ""
     return f"""<body>
 <div class="wrap">
@@ -1098,6 +1099,7 @@ def _masthead(active: str) -> str:
   <h1 class="title">Transfer<br><em>Desk</em>&nbsp;FCB.</h1>
   <nav class="page-nav">
     <a href="index.html" class="{cls_idx}">Notícias</a>
+    <a href="pauta.html" class="{cls_pauta}">Pauta</a>
     <a href="comparador.html" class="{cls_cmp}">Comparador</a>
   </nav>
 </header>
@@ -1196,10 +1198,12 @@ INDEX_BODY = r"""
   <div id="news-feed"></div>
   <button class="news-toggle" id="news-toggle" style="display:none">Mostrar mais ↓</button>
 </section>
+"""
 
-<section class="reveal d4">
+PAUTA_BODY = r"""
+<section class="reveal d3">
   <div class="section-title">
-    <span class="num">§ 02</span>
+    <span class="num">§ PAUTA</span>
     <h2>Nomes na pauta</h2>
     <span class="meta" id="rumors-meta"></span>
   </div>
@@ -1310,8 +1314,9 @@ document.getElementById("news-toggle").addEventListener("click", () => {
 });
 
 renderNews();
+"""
 
-// ====== NOMES NA PAUTA (rumors with confidence) ======
+PAUTA_SCRIPT = r"""
 function renderRumors() {
   const grid = document.getElementById("rumors-grid");
   const meta = document.getElementById("rumors-meta");
@@ -1321,7 +1326,6 @@ function renderRumors() {
     grid.innerHTML = `<div class="news-empty">Sem rumores ativos</div>`;
     return;
   }
-  // Sort by confidence desc, then by mentions desc, then alpha
   rumors.sort((a, b) =>
     (b.confidence || 0) - (a.confidence || 0) ||
     (b.mentions_count || 0) - (a.mentions_count || 0) ||
@@ -1334,7 +1338,6 @@ function renderRumors() {
     const conf = r.confidence || 0;
     const photoSrc = PHOTO_URL(r.id);
     const cold = conf === 0 ? "cold" : "";
-    const positionLabel = sourceMeta(r.source).label_short;
     const latestHtml = r.latest_news_url
       ? `<p class="latest-news">
            <span class="src">${esc(r.latest_news_journalist || "?")}</span>
@@ -1612,6 +1615,16 @@ def render_index(payload: dict) -> str:
     )
 
 
+def render_pauta(payload: dict) -> str:
+    return _assemble(
+        "pauta",
+        "Pauta · Transfer Desk FCB",
+        PAUTA_BODY,
+        PAUTA_SCRIPT,
+        payload,
+    )
+
+
 def render_comparador(payload: dict) -> str:
     return _assemble(
         "comparador",
@@ -1628,10 +1641,12 @@ def main():
     payload = _build_payload(players)
     print(f"  {len(payload['players'])}/{len(players)} utilizáveis no picker")
     print(f"  {len(payload['news'])} notícias no feed")
+    print(f"  {len(payload['rumors'])} especulados na pauta")
 
     (ROOT / "index.html").write_text(render_index(payload), encoding="utf-8")
+    (ROOT / "pauta.html").write_text(render_pauta(payload), encoding="utf-8")
     (ROOT / "comparador.html").write_text(render_comparador(payload), encoding="utf-8")
-    print(f"\nOK -> index.html + comparador.html")
+    print(f"\nOK -> index.html + pauta.html + comparador.html")
 
     from collections import Counter
     groups = Counter(p["position_group"] for p in payload["players"])

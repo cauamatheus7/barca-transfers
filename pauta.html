@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Comparador · Transfer Desk FCB</title>
+<title>Pauta · Transfer Desk FCB</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Big+Shoulders+Display:wght@600;800;900&display=swap" rel="stylesheet">
@@ -941,22 +941,24 @@
   <h1 class="title">Transfer<br><em>Desk</em>&nbsp;FCB.</h1>
   <nav class="page-nav">
     <a href="index.html" class="">Notícias</a>
-    <a href="pauta.html" class="">Pauta</a>
-    <a href="comparador.html" class="active">Comparador</a>
+    <a href="pauta.html" class="active">Pauta</a>
+    <a href="comparador.html" class="">Comparador</a>
   </nav>
 </header>
 
 <section class="reveal d3">
   <div class="section-title">
-    <span class="num">§ 02</span>
-    <h2>Comparador</h2>
-    <span class="meta" id="selection-count">0 / 3 selecionados</span>
+    <span class="num">§ PAUTA</span>
+    <h2>Nomes na pauta</h2>
+    <span class="meta" id="rumors-meta"></span>
   </div>
-
-  <div class="position-chips" id="position-chips"></div>
-  <div class="selection-bar" id="selection-bar"></div>
-  <div class="player-grid" id="player-grid"></div>
-  <div id="comparison-area"></div>
+  <p class="rumors-explainer">
+    Especulados ligados ao Barça nesta janela, ranqueados por <b>confiança</b> —
+    fórmula combina peso do jornalista (Romano > Moretto > demais), número de
+    fontes independentes reportando, e keywords de confirmação ("here we go",
+    "fichaje confirmado", etc.).
+  </p>
+  <div id="rumors-grid" class="rumors-grid"></div>
 </section>
 
 </div>
@@ -1032,202 +1034,55 @@ function initials(name) {
   el.innerHTML = `<span class="label">${esc(wd)}</span> <span class="sep">/</span> ${esc(dt)}`;
 })();
 
-// State
-let activeGroup = null;
-let selectedIds = [];
-const MAX_SELECTED = 3;
-
-const chipsEl = document.getElementById("position-chips");
-const selBar  = document.getElementById("selection-bar");
-const gridEl  = document.getElementById("player-grid");
-const compEl  = document.getElementById("comparison-area");
-const countEl = document.getElementById("selection-count");
-
-function renderChips() {
-  const groups = window.DATA.groups;
-  chipsEl.innerHTML = Object.entries(groups).map(([key, label]) =>
-    `<button class="position-chip ${activeGroup === key ? "active" : ""}" data-group="${esc(key)}">${esc(label)}</button>`
-  ).join("");
-  chipsEl.querySelectorAll(".position-chip").forEach(btn => {
-    btn.addEventListener("click", () => {
-      activeGroup = btn.dataset.group;
-      selectedIds = [];
-      renderAll();
-    });
-  });
-}
-
-function playersInGroup(group) {
-  return window.DATA.players
-    .filter(p => p.position_group === group)
-    .sort((a, b) => {
-      const ao = sourceMeta(a.source).order;
-      const bo = sourceMeta(b.source).order;
-      if (ao !== bo) return ao - bo;
-      return a.name.localeCompare(b.name);
-    });
-}
-
-function tileHTML(p) {
-  const isSel = selectedIds.includes(p.id);
-  const src = sourceMeta(p.source);
-  return `
-    <article class="player-tile ${esc(p.source)} ${isSel ? "selected" : ""}" data-id="${p.id}">
-      <span class="badge">${esc(src.label_short)}</span>
-      <div class="photo">
-        <img src="${PHOTO_URL(p.id)}" alt="${esc(p.name)}" loading="lazy"
-             onerror="this.parentElement.classList.add('fallback'); this.outerHTML='${esc(initials(p.name))}'">
-      </div>
-      <p class="pos">${esc(p.position_refined)}</p>
-      <h4>${esc(p.name)}</h4>
-      <p class="team">${esc(p.team)}</p>
-    </article>`;
-}
-
-function renderGrid() {
-  if (!activeGroup) {
-    gridEl.innerHTML = `<div class="empty" style="grid-column:1/-1">Escolha uma posição acima para ver os jogadores disponíveis.</div>`;
+function renderRumors() {
+  const grid = document.getElementById("rumors-grid");
+  const meta = document.getElementById("rumors-meta");
+  const rumors = (window.DATA.rumors || []).slice();
+  if (!grid) return;
+  if (rumors.length === 0) {
+    grid.innerHTML = `<div class="news-empty">Sem rumores ativos</div>`;
     return;
   }
-  const players = playersInGroup(activeGroup);
-  if (players.length === 0) {
-    gridEl.innerHTML = `<div class="empty" style="grid-column:1/-1">Nenhum jogador com stats nessa posição.</div>`;
-    return;
-  }
-  // Group by source with dividers
-  let html = "";
-  let lastSource = null;
-  for (const p of players) {
-    if (p.source !== lastSource) {
-      html += `<div class="group-divider">── ${esc(sourceMeta(p.source).label_long)} ──</div>`;
-      lastSource = p.source;
-    }
-    html += tileHTML(p);
-  }
-  gridEl.innerHTML = html;
+  rumors.sort((a, b) =>
+    (b.confidence || 0) - (a.confidence || 0) ||
+    (b.mentions_count || 0) - (a.mentions_count || 0) ||
+    a.name.localeCompare(b.name)
+  );
+  const active = rumors.filter(r => (r.confidence || 0) > 0).length;
+  meta.textContent = `${rumors.length} especulados · ${active} com menções recentes`;
 
-  gridEl.querySelectorAll(".player-tile").forEach(tile => {
-    tile.addEventListener("click", () => {
-      const id = parseInt(tile.dataset.id);
-      const idx = selectedIds.indexOf(id);
-      if (idx >= 0) {
-        selectedIds.splice(idx, 1);
-      } else if (selectedIds.length < MAX_SELECTED) {
-        selectedIds.push(id);
-      }
-      renderAll();
-    });
-  });
-}
-
-function renderSelectionBar() {
-  countEl.textContent = `${selectedIds.length} / ${MAX_SELECTED} selecionados`;
-  if (selectedIds.length === 0) {
-    selBar.innerHTML = `<span class="hint">Selecione 2 ou 3 jogadores na grade abaixo · Clique novamente para remover</span>`;
-    return;
-  }
-  const chips = selectedIds.map(id => {
-    const p = playerById(id);
-    if (!p) return "";
-    const src = sourceMeta(p.source);
+  grid.innerHTML = rumors.map(r => {
+    const conf = r.confidence || 0;
+    const photoSrc = PHOTO_URL(r.id);
+    const cold = conf === 0 ? "cold" : "";
+    const latestHtml = r.latest_news_url
+      ? `<p class="latest-news">
+           <span class="src">${esc(r.latest_news_journalist || "?")}</span>
+           <a href="${esc(r.latest_news_url)}" target="_blank" rel="noopener">${esc((r.latest_news_title || "").slice(0, 90))}${(r.latest_news_title || "").length > 90 ? "…" : ""}</a>
+         </p>`
+      : `<p class="no-news">— sem menções ainda</p>`;
     return `
-      <button class="selected-chip" data-id="${p.id}">
-        <img src="${PHOTO_URL(p.id)}" alt="${esc(p.name)}" loading="lazy">
-        <span class="info">
-          <span class="name">${esc(p.name)}</span>
-          <span class="src">${esc(src.label_short)} · ${esc(p.position_refined)}</span>
-        </span>
-        <span class="x">×</span>
-      </button>`;
-  }).join("");
-  const remaining = MAX_SELECTED - selectedIds.length;
-  const hint = selectedIds.length < 2
-    ? `<span class="hint">Selecione mais ${2 - selectedIds.length} jogador${2 - selectedIds.length > 1 ? "es" : ""} para comparar</span>`
-    : (remaining > 0 ? `<span class="hint">Pode adicionar mais ${remaining}</span>` : "");
-  selBar.innerHTML = chips + hint;
-
-  selBar.querySelectorAll(".selected-chip").forEach(b => {
-    b.addEventListener("click", () => {
-      const id = parseInt(b.dataset.id);
-      selectedIds = selectedIds.filter(x => x !== id);
-      renderAll();
-    });
-  });
-}
-
-function renderComparison() {
-  const selected = selectedIds.map(playerById).filter(Boolean);
-  if (selected.length < 2 || !activeGroup) {
-    compEl.innerHTML = "";
-    return;
-  }
-  const stats = window.DATA.stats_by_group[activeGroup];
-
-  const cardsHtml = selected.map(p => {
-    const src = sourceMeta(p.source);
-    const jersey = p.jersey != null ? p.jersey : "—";
-    const bio = [
-      p.age ? `${p.age} anos` : null,
-      p.height ? `${p.height} cm` : null,
-      p.preferredFoot ? `pé ${p.preferredFoot.toLowerCase()}` : null,
-    ].filter(Boolean).join(" · ");
-    return `
-      <article class="pcard ${esc(p.source)}">
-        <span class="jersey">${esc(jersey)}</span>
-        <p class="pcard-source">${esc(src.label_short)} · ${esc(p.position_refined)}</p>
-        <h3>${esc(p.name)}</h3>
-        <div class="meta">
-          ${esc(p.team)}${p.country ? ` · ${esc(p.country)}` : ""}<br>
-          ${esc(bio)}
-          <span class="league-line">${esc(p.league || "—")}</span>
-          ${p.note ? `<span class="note">${esc(p.note)}</span>` : ""}
+      <article class="rumor-card ${cold}">
+        <div class="photo-wrap">
+          <div class="bg" style="background-image: url('${photoSrc}')"></div>
+          <img src="${photoSrc}" alt="${esc(r.name)}" loading="lazy" onerror="this.style.display='none'">
         </div>
+        <h4>${esc(r.name)}</h4>
+        <p class="rumor-meta">
+          ${esc(r.team || "?")} · <span class="pos">${esc(r.position_refined || "?")}</span>
+          ${r.note ? `<br><span style="opacity:0.85">${esc(r.note)}</span>` : ""}
+        </p>
+        <div class="conf">
+          <div class="conf-row">
+            <span>Confiança</span>
+            <span class="conf-pct">${conf}%</span>
+          </div>
+          <div class="conf-bar"><div class="conf-fill" style="width:${conf}%"></div></div>
+        </div>
+        ${latestHtml}
       </article>`;
   }).join("");
-
-  let rowsHtml = "";
-  for (const stat of stats) {
-    const values = selected.map(p => {
-      const v = p.stats[stat.key];
-      return typeof v === "number" ? v : null;
-    });
-    const valid = values.filter(v => v !== null);
-    let best = null, allEqual = true;
-    if (valid.length > 0) {
-      const min = Math.min(...valid), max = Math.max(...valid);
-      best = stat.smaller_better ? min : max;
-      allEqual = Math.abs(max - min) < 1e-9;
-    }
-    const cells = values.map(v => {
-      if (v === null) return `<td class="loss">—</td>`;
-      const isBest = (!allEqual && best !== null && Math.abs(v - best) < 1e-9);
-      return `<td class="${isBest ? "win" : ""}">${fmt(v)}</td>`;
-    }).join("");
-    rowsHtml += `<tr><td>${esc(stat.label)}</td>${cells}</tr>`;
-  }
-
-  const headers = selected.map(p => `<th>${esc(p.shortName || p.name)}</th>`).join("");
-  const groupLabel = window.DATA.groups[activeGroup];
-
-  compEl.innerHTML = `
-    <div class="info-row">
-      <span><span class="pos-tag">${esc(groupLabel)}</span>${selected.length} jogadores · stats 25/26</span>
-      <span>▲ vencedor por 90 min · — sem dados</span>
-    </div>
-    <div class="player-cards cols-${selected.length}">${cardsHtml}</div>
-    <table class="stats-table">
-      <thead><tr><th>Estatística</th>${headers}</tr></thead>
-      <tbody>${rowsHtml}</tbody>
-    </table>
-  `;
 }
 
-function renderAll() {
-  renderChips();
-  renderSelectionBar();
-  renderGrid();
-  renderComparison();
-}
-
-renderAll();
+renderRumors();
 </script></body></html>
