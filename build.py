@@ -166,6 +166,20 @@ HEAD_OPEN = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__</title>
+<meta name="description" content="__OG_DESC__">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Transfer Desk FCB">
+<meta property="og:url" content="__OG_URL__">
+<meta property="og:title" content="__TITLE__">
+<meta property="og:description" content="__OG_DESC__">
+<meta property="og:image" content="https://cauamatheus7.github.io/barca-transfers/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="__TITLE__">
+<meta name="twitter:description" content="__OG_DESC__">
+<meta name="twitter:image" content="https://cauamatheus7.github.io/barca-transfers/assets/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Big+Shoulders+Display:wght@600;800;900&family=Allura&display=swap" rel="stylesheet">
@@ -1707,8 +1721,14 @@ renderAll();
 #  ASSEMBLE & RENDER
 # ─────────────────────────────────────────────────────────────────
 
-def _assemble(active_page: str, title: str, body: str, page_script: str, payload: dict) -> str:
-    head = HEAD_OPEN.replace("__TITLE__", title)
+SITE_URL = "https://cauamatheus7.github.io/barca-transfers"
+
+
+def _assemble(active_page: str, title: str, body: str, page_script: str, payload: dict, og_desc: str, og_url: str) -> str:
+    head = (HEAD_OPEN
+            .replace("__TITLE__", title)
+            .replace("__OG_DESC__", og_desc)
+            .replace("__OG_URL__", og_url))
     masthead = _masthead(active_page)
     full_script = SHARED_SCRIPT + page_script
     full_script = full_script.replace("__DATA__", json.dumps(payload, ensure_ascii=False))
@@ -1722,6 +1742,8 @@ def render_index(payload: dict) -> str:
         INDEX_BODY,
         INDEX_SCRIPT,
         payload,
+        og_desc="Centro de monitoramento de rumores do FC Barcelona — fontes de Romano, Moretto, Romero e mais. Atualizado a cada hora.",
+        og_url=f"{SITE_URL}/",
     )
 
 
@@ -1732,6 +1754,8 @@ def render_pauta(payload: dict) -> str:
         PAUTA_BODY,
         PAUTA_SCRIPT,
         payload,
+        og_desc="16 jogadores ligados ao Barça nesta janela, ranqueados por confiança da fonte. Bastoni, Álvarez, Murillo e outros nomes em pauta.",
+        og_url=f"{SITE_URL}/pauta.html",
     )
 
 
@@ -1742,6 +1766,8 @@ def render_comparador(payload: dict) -> str:
         COMPARADOR_BODY,
         COMPARADOR_SCRIPT,
         payload,
+        og_desc="Compare especulados com o elenco atual do Barcelona. Stats SofaScore + valor de mercado Transfermarkt em tempo real.",
+        og_url=f"{SITE_URL}/comparador.html",
     )
 
 
