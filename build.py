@@ -889,6 +889,15 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     color: var(--mist);
     line-height: 1.3;
   }
+  .player-tile .tile-value {
+    font-family: var(--font-numeric);
+    font-weight: 800;
+    font-size: 17px;
+    color: var(--gold);
+    letter-spacing: -0.01em;
+    margin-top: 8px;
+    line-height: 1;
+  }
 
   /* ─── comparison area (dossier + ledger) ─── */
   .info-row {
@@ -1514,6 +1523,7 @@ function tileHTML(p) {
       <p class="pos">${esc(p.position_refined)}</p>
       <h4>${esc(p.name)}</h4>
       <p class="team">${esc(p.team)}</p>
+      ${p.market_value_label ? `<p class="tile-value">${esc(p.market_value_label)}</p>` : ""}
     </article>`;
 }
 
