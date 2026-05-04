@@ -976,7 +976,10 @@ SHARED_SCRIPT = r"""
 window.DATA = __DATA__;
 // Fotos locais (baixadas via scrapers/fetch_photos.py) — evita bloqueio ORB do Chrome
 // quando carregadas direto da CDN do SofaScore em outro domínio (GitHub Pages, etc).
-const PHOTO_URL = (id) => `assets/photos/${id}.webp`;
+// Cache-buster baseado em window.DATA.generated força o browser a re-baixar quando
+// reprocessamos as fotos (ex: pra remover fundo branco).
+const PHOTO_VER = encodeURIComponent(window.DATA.generated || "1");
+const PHOTO_URL = (id) => `assets/photos/${id}.webp?v=${PHOTO_VER}`;
 
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({
