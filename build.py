@@ -374,22 +374,22 @@ HEAD_OPEN = r"""<!DOCTYPE html>
   .news-card .cover {
     position: relative;
     width: 100%;
-    aspect-ratio: 4/5;
+    aspect-ratio: 1/1;
     overflow: hidden;
     margin-bottom: 14px;
     border: 1px solid var(--rule);
     background: var(--ink-rise);
   }
-  /* Layer 1: foto blurada e ampliada como background — "estende" o fundo */
+  /* Layer 1: foto blurada e ampliada — estende o fundo do photo nos cantos do card */
   .news-card .cover .bg {
     position: absolute;
-    inset: -10%;
+    inset: -8%;
     background-size: cover;
     background-position: center;
-    filter: blur(28px) saturate(1.3) brightness(0.7);
+    filter: blur(32px) saturate(1.35) brightness(0.55);
     z-index: 1;
   }
-  /* Layer 2: foto nítida contida no centro */
+  /* Layer 2: foto nítida contida com padding pra dar zoom-out real */
   .news-card .cover img {
     position: relative;
     z-index: 2;
@@ -398,6 +398,8 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     height: 100%;
     object-fit: contain;
     object-position: center;
+    padding: 14px 0;
+    box-sizing: border-box;
     transition: transform 600ms ease;
   }
   .news-card:hover .cover img { transform: scale(1.03); }
