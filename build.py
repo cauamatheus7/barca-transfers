@@ -972,11 +972,6 @@ def _masthead(active: str) -> str:
 
 
 FOOTER_HTML = r"""
-<footer>
-  <p>Dados via <code>cache/stats.json</code> · SofaScore 25/26 · regerado por <code>build.py</code> a cada execução da rotina <code>/schedule</code>.</p>
-  <p>Cores: <span style="color:#1a4faf">azul Barça</span> · <span style="color:#b3163a">grená</span> · <span style="color:#f5c518">ouro catalão</span> · sobre tinta marinha.</p>
-</footer>
-
 </div>
 """
 
@@ -1111,7 +1106,6 @@ function newsCardHTML(it) {
       </div>
       <h3><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a></h3>
       <p class="snippet">${esc(it.snippet || "")}</p>
-      ${tagsHtml ? `<div class="player-tags">${tagsHtml}</div>` : ""}
     </article>`;
 }
 
