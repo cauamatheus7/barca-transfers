@@ -113,9 +113,9 @@ def main():
               "Atualizado a cada hora · Romano · Moretto · Romero · Juanmartí",
               font=sub_font, fill=MIST)
 
-    # URL no canto inferior
+    # Tagline neutra no canto inferior (sem URL pessoal)
     url_font = find_font(["C:/Windows/Fonts/consola.ttf", "C:/Windows/Fonts/arial.ttf"], 18)
-    draw.text((80, 568), "cauamatheus7.github.io/barca-transfers",
+    draw.text((80, 568), "Janela de transferências · 2026",
               font=url_font, fill=MIST)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

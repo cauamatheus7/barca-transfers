@@ -173,13 +173,13 @@ HEAD_OPEN = r"""<!DOCTYPE html>
 <meta property="og:url" content="__OG_URL__">
 <meta property="og:title" content="__TITLE__">
 <meta property="og:description" content="__OG_DESC__">
-<meta property="og:image" content="https://cauamatheus7.github.io/barca-transfers/assets/og-image.png">
+<meta property="og:image" content="__OG_IMAGE__">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="__TITLE__">
 <meta name="twitter:description" content="__OG_DESC__">
-<meta name="twitter:image" content="https://cauamatheus7.github.io/barca-transfers/assets/og-image.png">
+<meta name="twitter:image" content="__OG_IMAGE__">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Big+Shoulders+Display:wght@600;800;900&family=Allura&display=swap" rel="stylesheet">
@@ -1182,25 +1182,6 @@ HEAD_OPEN = r"""<!DOCTYPE html>
     font-size: 10px;
   }
 
-  /* ─── watermark (assinatura do dono) ─── */
-  .watermark {
-    position: fixed;
-    bottom: 10px;
-    right: 16px;
-    font-family: "Allura", cursive;
-    font-size: 22px;
-    color: var(--paper);
-    opacity: 0.32;
-    z-index: 100;
-    pointer-events: none;
-    user-select: none;
-    letter-spacing: 0.01em;
-    line-height: 1;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-  }
-  @media (max-width: 560px) {
-    .watermark { font-size: 18px; bottom: 8px; right: 10px; }
-  }
 
   /* ─── reveal ─── */
   .reveal { opacity: 0; transform: translateY(8px); animation: reveal 700ms ease forwards; }
@@ -1270,7 +1251,6 @@ def _masthead(active: str) -> str:
 
 FOOTER_HTML = r"""
 </div>
-<div class="watermark" aria-hidden="true">cauamxt</div>
 """
 
 
@@ -1847,14 +1827,17 @@ renderAll();
 #  ASSEMBLE & RENDER
 # ─────────────────────────────────────────────────────────────────
 
-SITE_URL = "https://cauamatheus7.github.io/barca-transfers"
+import os
+# URL pública do site — sobrescreve via env: SITE_URL=https://meu-dominio.com python build.py
+SITE_URL = os.environ.get("SITE_URL", "https://example.com/barca-transfers").rstrip("/")
 
 
 def _assemble(active_page: str, title: str, body: str, page_script: str, payload: dict, og_desc: str, og_url: str) -> str:
     head = (HEAD_OPEN
             .replace("__TITLE__", title)
             .replace("__OG_DESC__", og_desc)
-            .replace("__OG_URL__", og_url))
+            .replace("__OG_URL__", og_url)
+            .replace("__OG_IMAGE__", f"{SITE_URL}/assets/og-image.png"))
     masthead = _masthead(active_page)
     full_script = SHARED_SCRIPT + page_script
     full_script = full_script.replace("__DATA__", json.dumps(payload, ensure_ascii=False))

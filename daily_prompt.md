@@ -1,28 +1,20 @@
-# Prompt da Rotina Diária (Remote Agent)
+# Prompt da Rotina Automatizada (template)
 
-Texto exato que a rotina agendada (`/schedule`) executa 3x/dia às 8h, 14h, 18h
-horário de Brasília (UTC-3). Roda em ambiente cloud da Anthropic, com este repo
-já clonado em `$PWD`.
+Texto de referência pra quem quiser conectar uma automação (Claude Code routine, GitHub Action, n8n, etc.) ao site. O pipeline é idempotente — pode rodar quantas vezes quiser.
 
 ---
 
-Você é uma rotina automatizada de captura de rumores de transferência do FC Barcelona.
-Você está no repositório já clonado em `$PWD`. Execute exatamente os passos abaixo
-e reporte resumo curto no final. Não pergunte nada ao usuário, não improvise.
+Você é uma rotina automatizada de captura de rumores de transferência do FC Barcelona (entradas E saídas). O repositório já está clonado em `$PWD`. Execute exatamente os passos abaixo. Não improvise.
 
-## Passo 0 — Setup do ambiente
-
-Garante que `curl_cffi` está disponível (necessário pelos scrapers):
+## Passo 0 — Setup
 
 ```bash
-pip install --quiet curl_cffi
+pip install --quiet curl_cffi pillow
 ```
 
-## Passo 1 — WebSearch (9 queries: 7 jornalistas + 2 saídas)
+## Passo 1 — WebSearch (9 queries de exemplo)
 
-Rode WebSearch para cada query EXATAMENTE como está abaixo. As 7 primeiras
-cobrem rumores de jornalistas especializados (entradas e saídas). As 2 últimas
-são genéricas e cobrem especificamente saídas/vendas do elenco atual:
+Rode WebSearch em cada query (ajuste os nomes pros jornalistas que VOCÊ confia):
 
 1. `"Fabrizio Romano" Barcelona transfer 2026`
 2. `"Gerard Romero" Barça mercado 2026`
@@ -34,29 +26,20 @@ são genéricas e cobrem especificamente saídas/vendas do elenco atual:
 8. `Barcelona player leaving exit transfer 2026`
 9. `Barça salida jugador venta 2026`
 
-## Passo 2 — Compilar JSON
+## Passo 2 — Compilar JSON em `cache/news_raw.json`
 
-Para cada item retornado em cada WebSearch, extraia:
+Para cada item: `title`, `url`, `snippet`, `journalist` (use `"Geral"` para queries 8 e 9), `query`, `published_at` (null se não conseguir extrair).
 
-- `title` (string, obrigatório)
-- `url` (string, obrigatório)
-- `snippet` (string — primeiro parágrafo do resultado)
-- `journalist` (string — qual jornalista da lista do Passo 1 foi a query origem)
-- `query` (string — a query exata usada)
-- `published_at` (ISO datetime se conseguir extrair, senão null)
+Filtros:
+- Pular sem 'Barcelona' nem 'Barça' em title/snippet
+- Pular >30 dias
+- Pular duplicatas de URL (mesma URL em queries diferentes — manter primeira ocorrência)
 
-**Filtros antes de incluir:**
-
-- Pular resultados onde nem `Barcelona` nem `Barça` aparecem em title ou snippet
-- Pular resultados claramente velhos (mais de 30 dias atrás se conseguir inferir)
-- Pular duplicatas: mesma URL aparecendo em duas queries — manter primeira ocorrência
-
-**Salve o JSON** em `cache/news_raw.json` (caminho relativo ao repo) no formato:
-
+Formato:
 ```json
 {
-  "fetched_at": "ISO_TIMESTAMP_DESTA_EXECUÇÃO_UTC",
-  "items": [ ... ]
+  "fetched_at": "ISO_UTC",
+  "items": [...]
 }
 ```
 
@@ -66,46 +49,41 @@ Para cada item retornado em cada WebSearch, extraia:
 PYTHONIOENCODING=utf-8 python scrapers/process_news.py
 ```
 
-Mescla `news_raw.json` em `cache/news.json` (acumulado) e atualiza `cache/rumors.json`
-com `last_seen` / `mentions_count` / `latest_news_*` em cada player.
-
-## Passo 4 — Stats de jogadores novos
+## Passo 4 — Stats SofaScore (só players novos)
 
 ```bash
 PYTHONIOENCODING=utf-8 python scrapers/scrape_stats.py
 ```
 
-Só busca SofaScore para players que não têm cache ainda. Rápido se nada novo.
-
-## Passo 5 — Regerar HTML
+## Passo 5 — Fotos novas
 
 ```bash
-PYTHONIOENCODING=utf-8 python build.py
+PYTHONIOENCODING=utf-8 python scrapers/fetch_photos.py
 ```
 
-## Passo 6 — Commit e push
-
-Só commita se algo mudou. Se nada mudou, pula.
+## Passo 6 — Regerar HTML
 
 ```bash
-git add cache/news.json cache/rumors.json cache/stats.json index.html
+SITE_URL=https://SEU-DOMINIO PYTHONIOENCODING=utf-8 python build.py
+```
+
+## Passo 7 — Commit e push (só se mudou)
+
+```bash
+git add cache/ index.html pauta.html comparador.html assets/photos/
 if git diff --cached --quiet; then
-  echo "Nenhuma mudança pra commitar"
+  echo "Nenhuma mudança"
 else
-  git -c user.name="barca-bot" -c user.email="bot@barca-transfers.local" commit -m "Auto-update $(date -u +%Y-%m-%dT%H:%M)Z"
+  git -c user.name="bot" -c user.email="bot@local" commit -m "Auto-update $(date -u +%Y-%m-%dT%H:%M)Z"
   git push origin main
 fi
 ```
 
-## Passo 7 — Reportar (resposta final)
+## Passo 8 — Reporte (max 6 linhas)
 
-Máximo 6 linhas:
+- Total de notícias em cache/news.json (delta)
+- Top 3 menções: "Player → N jornalistas" + confidence %
+- Queries com zero resultados
+- Erros encontrados
 
-- Total de notícias no `cache/news.json` (delta vs antes da execução)
-- Top 3 menções desta rodada: `Player → N jornalistas falaram`
-- Algum WebSearch que retornou zero resultados? Listar
-- Algum erro nos passos? Resumir
-
-Não invente fatos. Não embeleze. Se algo falhou, prefira reportar curto e claro
-("scrape_stats falhou em SofaScore por timeout, cache não atualizado") a fingir
-que tudo ficou bem.
+Não invente. Reporte falhas honestamente.
